@@ -1,0 +1,4 @@
+couchdb
+faker
+kubernetes
+python-dotenv

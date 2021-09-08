@@ -1,4 +1,4 @@
-# Kubernetes Playground
+# CouchDB k8s Stress Tests
 
 Proof of concepts of resilience in CouchDB EKS Cluster.
 
