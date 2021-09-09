@@ -13,7 +13,7 @@ couchdb_password = os.getenv('COUCHDB_PASSWORD')
 db_names = [i for i in os.environ.get("COUCHDB_DB_NAMES").split(" ")]
 couchserver = couchdb.Server(
     "http://%s:%s@localhost:5984/" % (couchdb_user, couchdb_password))
-n_rows = os.getenv('COUCHDB_INSERT_ROWS')
+n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
 
 
 def main():
@@ -29,6 +29,9 @@ def main():
         elif scenario == 2:
             scenario_2_delete_some_pods(
                 couchserver, namespace, n_rows, db_names)
+
+        elif scenario == 3:
+            clear_dbs(couchserver)
 
     else:
         raise Exception(
