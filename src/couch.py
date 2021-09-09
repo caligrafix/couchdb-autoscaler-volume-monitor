@@ -1,5 +1,3 @@
-import couchdb
-import os
 from faker import Faker
 
 
@@ -17,7 +15,7 @@ def generate_random_data(n_rows):
     data = []
     fake = Faker('it_IT')
 
-    for _ in range(100):
+    for _ in range(n_rows):
         doc = {'name': (fake.name())}
         data.append(doc)
     return data

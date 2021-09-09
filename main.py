@@ -1,3 +1,4 @@
+import couchdb
 import os
 import sys
 from src.scenarios import *
