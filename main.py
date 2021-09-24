@@ -10,9 +10,13 @@ load_dotenv()
 namespace = os.getenv('EKS_NAMESPACE')
 couchdb_user = os.getenv('COUCHDB_USER')
 couchdb_password = os.getenv('COUCHDB_PASSWORD')
+couchdb_svc = os.getenv('COUCHDB_SVC')
+couchdb_port = os.getenv('COUCHDB_PORT')
 db_names = [i for i in os.environ.get("COUCHDB_DB_NAMES").split(" ")]
-couchserver = couchdb.Server(
-    "http://%s:%s@localhost:5984/" % (couchdb_user, couchdb_password))
+couchdb_url = f"http://{couchdb_user}:{couchdb_password}@{couchdb_svc}:{couchdb_port}/"
+print(couchdb_url)
+couchserver = couchdb.Server(couchdb_url)
+print(f"couchserver: {couchserver}")
 n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
 
 
