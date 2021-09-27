@@ -1,7 +1,19 @@
+import couchdb
 import logging
 from pprint import pprint
 from faker import Faker
 from operator import itemgetter
+
+
+def get_couch_client(url):
+    try:
+        logging.info(f"Connecting to couchdb server")
+        couchdb_client = couchdb.Server(url)
+        return couchdb_client
+    except:
+        logging.info(f"Error connecting to couch")
+        raise Exception(
+            "Error connecting to couchdb")
 
 
 def select_or_create_db(couchserver, db_name):
