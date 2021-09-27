@@ -10,6 +10,7 @@ spec:
     envFrom:
       - secretRef:
           name: app-secrets
+  restartPolicy: Never
   imagePullSecrets:
   - name: caligrafixregistry
     
