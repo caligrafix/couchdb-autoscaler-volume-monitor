@@ -37,6 +37,7 @@ def get_pods(namespace):
 def delete_pods(pods, namespace, all=True):
     if all:
         logging.info(f"Deleting ALL pods in namespace {namespace}")
+        logging.info(f"PODS: {pods}")
     else:
         logging.info(f"Delete SOME pods in namespace {namespace}")
         pods = pods[:-1]

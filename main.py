@@ -1,4 +1,3 @@
-import couchdb
 import os
 import sys
 from src.scenarios import *
@@ -14,10 +13,9 @@ couchdb_svc = os.getenv('COUCHDB_SVC')
 couchdb_port = os.getenv('COUCHDB_PORT')
 db_names = [i for i in os.environ.get("COUCHDB_DB_NAMES").split(" ")]
 couchdb_url = f"http://{couchdb_user}:{couchdb_password}@{couchdb_svc}:{couchdb_port}/"
-print(couchdb_url)
-couchserver = couchdb.Server(couchdb_url)
-print(f"couchserver: {couchserver}")
 n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
+pods = [pod for pod in os.environ.get("POD_NAMES").split(" ")]
+print(f"POD NAMES: {pods}")
 
 
 def main():
@@ -28,14 +26,14 @@ def main():
         print(f'scenario: {scenario}')
         if scenario == 1:
             scenario_1_delete_all_pods(
-                couchserver, namespace, n_rows, db_names)
+                couchdb_url, namespace, n_rows, db_names, pods)
 
-        elif scenario == 2:
-            scenario_2_delete_some_pods(
-                couchserver, namespace, n_rows, db_names)
+        # elif scenario == 2:
+        #     scenario_2_delete_some_pods(
+        #         couchserver, namespace, n_rows, db_names)
 
-        elif scenario == 3:
-            clear_dbs(couchserver)
+        # elif scenario == 3:
+        #     clear_dbs(couchserver)
 
     else:
         raise Exception(
