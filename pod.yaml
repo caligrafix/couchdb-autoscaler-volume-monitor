@@ -7,5 +7,9 @@ spec:
   - name: couchdb-k8s-stress-tests
     image: gitlab-registry.caligrafix.cl:443/ecaligrafix/couchdb-k8s-stress-tests:latest
     args: ["--scenario", "1"]
+    envFrom:
+      - secretRef:
+          name: app-secrets
   imagePullSecrets:
   - name: caligrafixregistry
+    

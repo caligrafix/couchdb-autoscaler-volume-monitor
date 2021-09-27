@@ -1,3 +1,4 @@
 /k8s-python
 __pycache__/
 .gitignore
+secret.yaml
