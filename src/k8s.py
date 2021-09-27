@@ -44,7 +44,6 @@ def delete_pods(pods, namespace, all=True):
     for pod in pods:
         try:
             api_response = v1.delete_namespaced_pod(pod, namespace)
-            print(api_response)
         except ApiException as e:
             print(
                 "Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
