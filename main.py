@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from src.scenarios import *
 from dotenv import load_dotenv
 
@@ -7,15 +8,14 @@ load_dotenv()
 
 # Load env vars
 namespace = os.getenv('EKS_NAMESPACE')
-couchdb_user = os.getenv('COUCHDB_USER')
-couchdb_password = os.getenv('COUCHDB_PASSWORD')
+couchdb_user = os.getenv('adminUsername')
+couchdb_password = os.getenv('adminPassword')
 couchdb_svc = os.getenv('COUCHDB_SVC')
 couchdb_port = os.getenv('COUCHDB_PORT')
 db_names = [i for i in os.environ.get("COUCHDB_DB_NAMES").split(" ")]
 couchdb_url = f"http://{couchdb_user}:{couchdb_password}@{couchdb_svc}:{couchdb_port}/"
 n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
 pods = [pod for pod in os.environ.get("POD_NAMES").split(" ")]
-print(f"POD NAMES: {pods}")
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
 
     if len(args) == 2 and args[0] == '--scenario':
         scenario = int(args[1])
-        print(f'scenario: {scenario}')
+        logging.info(f'scenario: {scenario}')
         if scenario == 1:
             scenario_1_delete_all_pods(
                 couchdb_url, namespace, n_rows, db_names, pods)

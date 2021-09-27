@@ -9,7 +9,7 @@ spec:
     args: ["--scenario", "1"]
     envFrom:
       - secretRef:
-          name: app-secrets
+          name: couchdb-couchdb
   restartPolicy: Never
   imagePullSecrets:
   - name: caligrafixregistry
