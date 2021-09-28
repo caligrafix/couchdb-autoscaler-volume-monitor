@@ -34,16 +34,11 @@ def get_pods(namespace):
     return pods
 
 
-def delete_pods(pods, namespace, all=True):
-    if all:
-        logging.info(f"Deleting ALL pods in namespace {namespace}")
-        logging.info(f"PODS: {pods}")
-    else:
-        logging.info(f"Delete SOME pods in namespace {namespace}")
-        pods = pods[:-1]
+def delete_pods(pods, namespace):
+    logging.info(f"Deleting PODS {pods} in namespace {namespace}")
     for pod in pods:
         try:
-            api_response = v1.delete_namespaced_pod(pod, namespace)
+            v1.delete_namespaced_pod(pod, namespace)
         except ApiException as e:
             print(
                 "Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
