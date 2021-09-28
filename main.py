@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import logging
 from src.scenarios import *
 from dotenv import load_dotenv
@@ -28,12 +29,54 @@ def main():
             scenario_1_delete_all_pods(
                 couchdb_url, namespace, n_rows, db_names, pods)
 
-        # elif scenario == 2:
-        #     scenario_2_delete_some_pods(
-        #         couchserver, namespace, n_rows, db_names)
+        elif scenario == 2:
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"Scenario 2: delete pod-0, and pod-1")
+            scenario_2_delete_some_pods(
+                couchdb_url, namespace, n_rows, db_names, pods[0:-1])
+            logging.info(f"Sleeping 30 seconds")
+            time.sleep(30)
 
-        # elif scenario == 3:
-        #     clear_dbs(couchserver)
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"Scenario 2: delete pod-1, and pod-2")
+            scenario_2_delete_some_pods(
+                couchdb_url, namespace, n_rows, db_names, pods[1:]
+            )
+            logging.info(f"Sleeping 30 seconds")
+            time.sleep(30)
+
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"Scenario 2: delete pod-0")
+            scenario_2_delete_some_pods(
+                couchdb_url, namespace, n_rows, db_names, [pods[0]]
+            )
+            logging.info(f"Sleeping 30 seconds")
+            time.sleep(30)
+
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"Scenario 1: delete pod-1")
+            scenario_2_delete_some_pods(
+                couchdb_url, namespace, n_rows, db_names, [pods[1]]
+            )
+            logging.info(f"Sleeping 30 seconds")
+            time.sleep(30)
+
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"-----------------------------------")
+            logging.info(f"Scenario 2: delete pod-2")
+            scenario_2_delete_some_pods(
+                couchdb_url, namespace, n_rows, db_names, [pods[2]]
+            )
+            logging.info("Finished scenario 2")
 
     else:
         raise Exception(
