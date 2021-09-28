@@ -17,13 +17,24 @@ def get_couch_client(url):
             "Error connecting to couchdb")
 
 
+def get_database_info(couchdb_client):
+    for db in couchdb_client:
+        logging.info(f"db: {db}")
+        logging.info(f"{db}_total_rows: {couchdb_client[db].info()}")
+
+
 def select_or_create_db(couchserver, db_name):
     if db_name in couchserver:
         db = couchserver[db_name]
         logging.info(f"{db_name} already exist in couch")
     else:
-        db = couchserver.create(db_name)
         logging.info(f"creating db {db_name}")
+        try:
+            db = couchserver.create(db_name)
+        except Exception as error:
+            logging.info(f"Exception: {error}, use db already created")
+            db = couchserver[db_name]
+
     return db
 
 
@@ -44,7 +55,9 @@ def populate_db(db, data):
 
 
 def populate_dbs(couchdb_client, db_names, fake_data):
+
     for db_name in db_names:
+        logging.info(f"Attempt to populate DB")
         populate_db(select_or_create_db(couchdb_client, db_name), fake_data)
 
 
