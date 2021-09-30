@@ -44,10 +44,21 @@ def delete_pods(pods, namespace):
                 "Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
 
 
-def watch_pods(namespace):
+def watch_state_pods(pods, namespace):
+    pods_status = {pod: False for pod in pods}
+    logging.info(f'pods_status: {pods_status}')
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
-                          namespace=namespace):
-        logging.info("Event: %s %s %s" % (
-            event['type'], event['object'].kind, event['object'].metadata.name))
-        # logging.info("Raw Event: %s" % (event['raw_object']))
+                          namespace=namespace,
+                          label_selector="app=couchdb"):
+        if event['object'].status.phase == 'Pending':
+            pods_status[event['object'].metadata.name] = True
+        logging.info(
+            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+
+        # Check if all pods are Pending
+        if all(value == True for value in pods_status.values()):
+            logging.info("All desired pods are in Pending State")
+            w.stop()
+        else:
+            logging.info("Not all pods are pending...")
