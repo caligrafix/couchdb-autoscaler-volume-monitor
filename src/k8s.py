@@ -44,7 +44,7 @@ def delete_pods(pods, namespace):
                 "Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
 
 
-def watch_state_pods(pods, namespace):
+def watch_pods_state(pods, namespace):
     pods_status = {pod: False for pod in pods}
     logging.info(f'pods_status: {pods_status}')
     w = watch.Watch()
