@@ -57,7 +57,7 @@ def watch_state_pods(pods, namespace):
             f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
 
         # Check if all pods are Pending
-        if all(value == True for value in pods_status.values()):
+        if all(pods_status.values()):
             logging.info("All desired pods are in Pending State")
             w.stop()
         else:
