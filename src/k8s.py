@@ -62,3 +62,18 @@ def watch_pods_state(pods, namespace):
             w.stop()
         else:
             logging.info("Not all pods are pending...")
+
+
+def get_related_pod_pvc(pods, namespace):
+    pod_pvc_info = {}
+    for pod in pods:
+        api_response = v1.read_namespaced_pod(name=pod, namespace=namespace)
+        pod_pvc = api_response.spec.volumes[0].persistent_volume_claim.claim_name
+        logging.info(
+            f"Pod name: {api_response.metadata.name} - Pod PVC: {pod_pvc}")
+        pod_pvc_info[pod] = pod_pvc
+    return pod_pvc_info
+
+
+def get_namespaces_pvc(namespace):
+    return v1.list_namespaced_persistent_volume_claim(namespace)

@@ -78,6 +78,9 @@ def main():
             )
             logging.info("Finished scenario 2")
 
+        elif scenario == 3:
+            scenario_3_resize_pvc(
+                namespace, pods)
     else:
         raise Exception(
             "You must provide --scenario argument as first argument")
