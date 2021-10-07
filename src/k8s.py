@@ -77,3 +77,11 @@ def get_related_pod_pvc(pods, namespace):
 
 def get_namespaces_pvc(namespace):
     return v1.list_namespaced_persistent_volume_claim(namespace)
+
+
+def patch_namespaced_pvc(namespace, pod_pvc_info, spec_body):
+    for pvc in pod_pvc_info.values():
+        logging.info(f"resizing {pvc}")
+        api_response = v1.patch_namespaced_persistent_volume_claim(
+            pvc, namespace, spec_body)
+        logging.info(f"api response: {api_response}")
