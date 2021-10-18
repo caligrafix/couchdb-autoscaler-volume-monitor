@@ -2,3 +2,5 @@
 /k8s-python
 __pycache__/
 secret.yaml
+/src/*.json
+couch-config.yml
