@@ -1,5 +1,6 @@
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
+from kubernetes.stream import stream
 
 import logging
 
@@ -85,3 +86,9 @@ def patch_namespaced_pvc(namespace, pod_pvc_info, spec_body):
         api_response = v1.patch_namespaced_persistent_volume_claim(
             pvc, namespace, spec_body)
         logging.info(f"api response: {api_response}")
+
+
+def execute_exec_pod(exec_command, namespace, pod):
+    resp = stream(v1.connect_get_namespaced_pod_exec, pod, namespace,
+                  command=exec_command, stderr=True, stdin=False, stdout=True, tty=False)
+    print(f"Response: {resp}")

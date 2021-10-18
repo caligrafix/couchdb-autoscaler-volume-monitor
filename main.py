@@ -81,6 +81,10 @@ def main():
         elif scenario == 3:
             scenario_3_resize_pvc(
                 namespace, pods)
+
+        elif scenario == 4:
+            scenario_4_scaling_pvc_on_demand(
+                couchdb_url, n_rows, namespace, pods)
     else:
         raise Exception(
             "You must provide --scenario argument as first argument")
