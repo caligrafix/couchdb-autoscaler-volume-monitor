@@ -91,4 +91,4 @@ def patch_namespaced_pvc(namespace, pod_pvc_info, spec_body):
 def execute_exec_pod(exec_command, namespace, pod):
     resp = stream(v1.connect_get_namespaced_pod_exec, pod, namespace,
                   command=exec_command, stderr=True, stdin=False, stdout=True, tty=False)
-    print(f"Response: {resp}")
+    return resp
