@@ -25,6 +25,7 @@ def main():
     if len(args) == 2 and args[0] == '--scenario':
         scenario = int(args[1])
         logging.info(f'scenario: {scenario}')
+
         if scenario == 1:
             scenario_1_delete_all_pods(
                 couchdb_url, namespace, n_rows, db_names, pods)

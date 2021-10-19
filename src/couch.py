@@ -26,9 +26,9 @@ def get_database_info(couchdb_client):
 def select_or_create_db(couchserver, db_name):
     if db_name in couchserver:
         db = couchserver[db_name]
-        logging.info(f"{db_name} already exist in couch")
+        # logging.info(f"{db_name} already exist in couch")
     else:
-        logging.info(f"creating db {db_name}")
+        # logging.info(f"creating db {db_name}")
         try:
             db = couchserver.create(db_name)
         except Exception as error:
@@ -50,14 +50,14 @@ def generate_random_data(n_rows):
 
 
 def populate_db(db, data):
-    logging.info(f"populate {db} with {len(data)} rows")
+    # logging.info(f"populate {db} with {len(data)} rows")
     return db.update(data)
 
 
 def populate_dbs(couchdb_client, db_names, fake_data):
 
     for db_name in db_names:
-        logging.info(f"Attempt to populate DB")
+        # logging.info(f"Attempt to populate DB")
         populate_db(select_or_create_db(couchdb_client, db_name), fake_data)
 
 
