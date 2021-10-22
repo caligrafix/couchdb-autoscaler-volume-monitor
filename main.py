@@ -17,6 +17,7 @@ db_names = [i for i in os.environ.get("COUCHDB_DB_NAMES").split(" ")]
 couchdb_url = f"http://{couchdb_user}:{couchdb_password}@{couchdb_svc}:{couchdb_port}/"
 n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
 pods = [pod for pod in os.environ.get("POD_NAMES").split(" ")]
+n_it = int(os.getenv('COUCHDB_N_IT'))
 
 
 def main():
@@ -25,6 +26,10 @@ def main():
     if len(args) == 2 and args[0] == '--scenario':
         scenario = int(args[1])
         logging.info(f'scenario: {scenario}')
+
+        if scenario == 0:
+            scenario_0_populate_couchdb(
+                couchdb_url, n_rows, n_it, db_names, clear=True)
 
         if scenario == 1:
             scenario_1_delete_all_pods(

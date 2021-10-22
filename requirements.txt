@@ -2,4 +2,4 @@ couchdb
 faker
 kubernetes
 python-dotenv
-progressbar
+tqdm
