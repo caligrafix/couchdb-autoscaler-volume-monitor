@@ -1,6 +1,8 @@
+import io
 import os
 import sys
 import time
+from tqdm import tqdm
 import logging
 from src.scenarios import *
 from dotenv import load_dotenv
@@ -97,4 +99,8 @@ def main():
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    tqdm_out = TqdmToLogger(logger, level=logging.INFO)
+    logging.getLogger('faker').setLevel(logging.ERROR)
     main()
