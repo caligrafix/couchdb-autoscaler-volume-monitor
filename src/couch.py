@@ -44,7 +44,12 @@ def generate_random_data(n_rows):
     fake.seed_instance(54321)
 
     for _ in range(n_rows):
-        doc = {'name': (fake.name())}
+        doc = {'name': fake.name(),
+               'address': fake.address(),
+               'date': fake.date(),
+               'phone_number': fake.phone_number(),
+               'email': fake.ascii_company_email(),
+               'cordinates': str(fake.latlng())}
         data.append(doc)
     return data
 
