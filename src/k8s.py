@@ -4,7 +4,8 @@ from kubernetes.stream import stream
 
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('faker').setLevel(logging.ERROR)
 
 try:
     config.load_incluster_config()
