@@ -20,6 +20,8 @@ couchdb_url = f"http://{couchdb_user}:{couchdb_password}@{couchdb_svc}:{couchdb_
 n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
 pods = [pod for pod in os.environ.get("POD_NAMES").split(" ")]
 n_it = int(os.getenv('COUCHDB_N_IT'))
+VOLUME_THRESHOLD = float(os.getenv('VOLUME_THRESHOLD'))
+MOUNT_VOLUME_PATH = os.getenv('MOUNT_VOLUME_PATH')
 
 
 def main():
@@ -92,7 +94,7 @@ def main():
 
         elif scenario == 4:
             scenario_4_scaling_pvc_on_demand(
-                couchdb_url, n_rows, db_names, namespace, pods)
+                namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH)
     else:
         raise Exception(
             "You must provide --scenario argument as first argument")
