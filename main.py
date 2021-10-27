@@ -5,6 +5,7 @@ import time
 from tqdm import tqdm
 import logging
 from src.scenarios import *
+from src.scripts import *
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -92,12 +93,15 @@ def main():
             scenario_3_resize_pvc(
                 namespace, pods)
 
-        elif scenario == 4:
-            scenario_4_scaling_pvc_on_demand(
+    elif len(args) == 2 and args[0] == '--script':
+        script = int(args[1])
+        if script == 1:
+            script_1_monitor_scale_pvc(
                 namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH)
+
     else:
         raise Exception(
-            "You must provide --scenario argument as first argument")
+            "You must provide --scenario or --script as first argument")
 
 
 if __name__ == "__main__":

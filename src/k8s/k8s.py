@@ -68,6 +68,7 @@ def get_related_pod_pvc(pods, namespace):
     pod_pvc_info = {}
     for pod in pods:
         api_response = v1.read_namespaced_pod(name=pod, namespace=namespace)
+        logging.info(f"API_RESPONSE: {api_response}")
         pod_pvc = api_response.spec.volumes[0].persistent_volume_claim.claim_name
         logging.info(
             f"Pod name: {api_response.metadata.name} - Pod PVC: {pod_pvc}")
@@ -82,9 +83,8 @@ def get_namespaces_pvc(namespace):
 def patch_namespaced_pvc(namespace, pod_pvc_info, spec_body):
     for pvc in pod_pvc_info.values():
         logging.info(f"resizing {pvc}")
-        api_response = v1.patch_namespaced_persistent_volume_claim(
+        v1.patch_namespaced_persistent_volume_claim(
             pvc, namespace, spec_body)
-        logging.info(f"api response: {api_response}")
 
 
 def execute_exec_pods(exec_command, namespace, pod):
