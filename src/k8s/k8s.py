@@ -94,7 +94,9 @@ def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
         pvc_resize = str(pvc_size*(1+resize_percentage))+'Gi'
 
         spec_body = {'spec': {'resources': {
-            'requests': {'storage': {pvc_resize}}}}}
+            'requests': {'storage': pvc_resize}}}}
+
+        logging.info(f"SPEC_BODY: {spec_body}")
 
         logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize}")
         v1.patch_namespaced_persistent_volume_claim(
