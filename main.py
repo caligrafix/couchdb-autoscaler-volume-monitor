@@ -22,7 +22,8 @@ n_rows = int(os.getenv('COUCHDB_INSERT_ROWS'))
 pods = [pod for pod in os.environ.get("POD_NAMES").split(" ")]
 n_it = int(os.getenv('COUCHDB_N_IT'))
 VOLUME_THRESHOLD = float(os.getenv('VOLUME_THRESHOLD'))
-MOUNT_VOLUME_PATH = os.getenv('MOUNT_VOLUME_PATH')
+VOLUME_RESIZE_PERCENTAGE = float(os.getenv('VOLUME_RESIZE_PERCENTAGE'))
+MOUNT_VOLUME_PATH = os.getenv('VOLUME_MOUNT_PATH')
 
 
 def main():
@@ -97,7 +98,7 @@ def main():
         script = int(args[1])
         if script == 1:
             script_1_monitor_scale_pvc(
-                namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH)
+                namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE)
 
     else:
         raise Exception(

@@ -3,7 +3,7 @@ from src.k8s.k8s import *
 from .scenarios import scenario_3_resize_pvc
 
 
-def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH):
+def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE):
     """
     1. Monitoring the size of PV associate to pod with df command
     2. If size exceeds the defined threshold
@@ -34,7 +34,8 @@ def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_P
     # Check size is upper VOLUME_UMBRAL
     if pods_over_threshold:
         logging.info(f"Resizing PVC of pods {pods_over_threshold}")
-        scenario_3_resize_pvc(namespace, pods_over_threshold)
+        scenario_3_resize_pvc(
+            namespace, pods_over_threshold, VOLUME_RESIZE_PERCENTAGE)
     else:
         logging.info(f"No Volumes to Resize")
         return 0

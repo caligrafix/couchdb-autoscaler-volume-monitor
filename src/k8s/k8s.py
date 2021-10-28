@@ -66,13 +66,21 @@ def watch_pods_state(pods, namespace):
 
 def get_related_pod_pvc(pods, namespace):
     pod_pvc_info = {}
+    pvc_info = []
     for pod in pods:
         api_response = v1.read_namespaced_pod(name=pod, namespace=namespace)
-        logging.info(f"API_RESPONSE: {api_response}")
-        pod_pvc = api_response.spec.volumes[0].persistent_volume_claim.claim_name
-        logging.info(
-            f"Pod name: {api_response.metadata.name} - Pod PVC: {pod_pvc}")
-        pod_pvc_info[pod] = pod_pvc
+
+        # Get name of PVC
+        pvc_name = api_response.spec.volumes[0].persistent_volume_claim.claim_name
+        pvc_info.append(pvc_name)
+
+        # Get value of size PVC
+        pvc_size = v1.read_namespaced_persistent_volume_claim(
+            namespace=namespace, name=pvc_name).spec.resources.requests['storage']
+
+        pvc_info.append(pvc_size)
+
+        pod_pvc_info[pod] = pvc_info
     return pod_pvc_info
 
 
@@ -80,11 +88,17 @@ def get_namespaces_pvc(namespace):
     return v1.list_namespaced_persistent_volume_claim(namespace)
 
 
-def patch_namespaced_pvc(namespace, pod_pvc_info, spec_body):
+def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
     for pvc in pod_pvc_info.values():
-        logging.info(f"resizing {pvc}")
+        pvc_size = int(pvc[1].strip('Gi'))
+        pvc_resize = str(pvc_size*(1+resize_percentage))+'Gi'
+
+        spec_body = {'spec': {'resources': {
+            'requests': {'storage': {pvc_resize}}}}}
+
+        logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize}")
         v1.patch_namespaced_persistent_volume_claim(
-            pvc, namespace, spec_body)
+            pvc[0], namespace, spec_body)
 
 
 def execute_exec_pods(exec_command, namespace, pod):
