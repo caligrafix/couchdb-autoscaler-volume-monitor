@@ -110,4 +110,5 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     tqdm_out = TqdmToLogger(logger, level=logging.INFO)
     logging.getLogger('faker').setLevel(logging.ERROR)
+    logging.getLogger('kubernetes').setLevel(logging.ERROR)
     main()
