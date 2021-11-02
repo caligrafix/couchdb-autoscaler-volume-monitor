@@ -49,7 +49,11 @@ def generate_random_data(n_rows):
                'date': fake.date(),
                'phone_number': fake.phone_number(),
                'email': fake.ascii_company_email(),
-               'cordinates': str(fake.latlng())}
+               'cordinates': str(fake.latlng()),
+               'image': str(fake.image(size=(2, 2), hue='purple', luminosity='bright', image_format='pdf'))}
+        # ,
+        # 'cvs': fake.csv(header=('Name', 'Address', 'Favorite Color'), data_columns=('{{name}}', '{{address}}', '{{safe_color_name}}'), num_rows=100, include_row_ids=True),
+        # 'binary': fake.binary(length=256)}
         data.append(doc)
     return data
 
@@ -63,7 +67,24 @@ def populate_dbs(couchdb_client, db_names, fake_data):
 
     for db_name in db_names:
         # logging.info(f"Attempt to populate DB")
-        populate_db(select_or_create_db(couchdb_client, db_name), fake_data)
+        db = select_or_create_db(couchdb_client, db_name)
+        populate_db(db, fake_data)
+
+#         # Insert txt file to accelerate populated size
+#         populate_db_file(db, path='./src/couch/test.txt')
+
+
+# def populate_db_file(db, path):
+#     """ Upload a file path into db couchdb"""
+#     fake = Faker('it_IT')
+#     doc_id, doc_rev = db.save(
+#         {'type': 'file', 'name': 'Attachment'+fake.md5(raw_output=False)})
+#     doc = db[doc_id]
+#     f = open(path)
+#     try:
+#         db.put_attachment(doc, f, path, content_type="text/plain")
+#     finally:
+#         f.close()
 
 
 def clear_dbs(couchdb_client):
