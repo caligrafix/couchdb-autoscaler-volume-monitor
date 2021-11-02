@@ -3,7 +3,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 
 import logging
-
+import math
 
 try:
     config.load_incluster_config()
@@ -66,8 +66,8 @@ def watch_pods_state(pods, namespace):
 
 def get_related_pod_pvc(pods, namespace):
     pod_pvc_info = {}
-    pvc_info = []
     for pod in pods:
+        pvc_info = []
         api_response = v1.read_namespaced_pod(name=pod, namespace=namespace)
 
         # Get name of PVC
@@ -75,8 +75,13 @@ def get_related_pod_pvc(pods, namespace):
         pvc_info.append(pvc_name)
 
         # Get value of size PVC
-        pvc_size = v1.read_namespaced_persistent_volume_claim(
-            namespace=namespace, name=pvc_name).spec.resources.requests['storage']
+        pvc_metadata = v1.read_namespaced_persistent_volume_claim(
+            namespace=namespace, name=pvc_name)
+
+        # logging.info(f'pvc_info: {pvc_metadata}')
+
+        # pvc_size = pvc_info.spec.resources.requests['storage']
+        pvc_size = pvc_metadata.status.capacity['storage']
 
         pvc_info.append(pvc_size)
 
@@ -90,8 +95,15 @@ def get_namespaces_pvc(namespace):
 
 def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
     for pvc in pod_pvc_info.values():
-        pvc_size = int(pvc[1].strip('Gi'))
-        pvc_resize = str(pvc_size*(1+resize_percentage))+'Gi'
+        logging.info(f"pvc: {pvc}")
+        if pvc[1].endswith('Gi'):
+            pvc_size = int(pvc[1].strip('Gi'))
+            pvc_resize_number = int(math.ceil(pvc_size*(1+resize_percentage)))
+            pvc_resize = str(pvc_resize_number)+'Gi'
+
+        else:
+            pvc_size = int(pvc[1].strip('Mi'))
+            pvc_resize = str(pvc_size*(1+resize_percentage))+'Mi'
 
         spec_body = {'spec': {'resources': {
             'requests': {'storage': pvc_resize}}}}
@@ -99,8 +111,9 @@ def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
         logging.info(f"SPEC_BODY: {spec_body}")
 
         logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize}")
-        v1.patch_namespaced_persistent_volume_claim(
+        resize_response = v1.patch_namespaced_persistent_volume_claim(
             pvc[0], namespace, spec_body)
+        logging.info(f"resize_response: {resize_response}")
 
 
 def execute_exec_pods(exec_command, namespace, pod):

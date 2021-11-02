@@ -2,7 +2,6 @@ import io
 import os
 import sys
 import time
-from tqdm import tqdm
 import logging
 from src.scenarios import *
 from src.scripts import *
@@ -35,7 +34,7 @@ def main():
 
         if scenario == 0:
             scenario_0_populate_couchdb(
-                couchdb_url, n_rows, n_it, db_names, clear=True)
+                couchdb_url, n_rows, n_it, db_names)
 
         if scenario == 1:
             scenario_1_delete_all_pods(
@@ -108,7 +107,6 @@ def main():
 if __name__ == "__main__":
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    tqdm_out = TqdmToLogger(logger, level=logging.INFO)
     logging.getLogger('faker').setLevel(logging.ERROR)
     logging.getLogger('kubernetes').setLevel(logging.ERROR)
     main()
