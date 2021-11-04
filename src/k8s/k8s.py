@@ -40,28 +40,32 @@ def delete_pods(pods, namespace):
         try:
             v1.delete_namespaced_pod(pod, namespace)
         except ApiException as e:
-            print(
+            logging.info(
                 "Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
 
 
-def watch_pods_state(pods, namespace):
+def watch_pods_state(pods, namespace, desired_state='Pending'):
+    terminating = False
     pods_status = {pod: False for pod in pods}
-    logging.info(f'pods_status: {pods_status}')
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
                           namespace=namespace,
-                          label_selector="app=couchdb"):
-        if event['object'].status.phase == 'Pending':
-            pods_status[event['object'].metadata.name] = True
-        logging.info(
-            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+                          label_selector=f"app=couchdb, statefulset.kubernetes.io/pod-name={pods[0]}"):
+        status_pod = event['object'].status.phase
 
-        # Check if all pods are Pending
+        terminating = True if status_pod == 'Pending' else False
+
+        if status_pod == desired_state and terminating:
+            pods_status[event['object'].metadata.name] = True
+            logging.info(
+                f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+
+        # Check if all pods are in desired_state
         if all(pods_status.values()):
-            logging.info("All desired pods are in Pending State")
+            logging.info(f"All desired pods are in {desired_state} State")
             w.stop()
         else:
-            logging.info("Not all pods are pending...")
+            logging.info(f"Not all pods are {desired_state}...")
 
 
 def get_related_pod_pvc(pods, namespace):
@@ -94,26 +98,24 @@ def get_namespaces_pvc(namespace):
 
 
 def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
-    for pvc in pod_pvc_info.values():
-        logging.info(f"pvc: {pvc}")
-        if pvc[1].endswith('Gi'):
-            pvc_size = int(pvc[1].strip('Gi'))
-            pvc_resize_number = int(math.ceil(pvc_size*(1+resize_percentage)))
-            pvc_resize = str(pvc_resize_number)+'Gi'
-
-        else:
-            pvc_size = int(pvc[1].strip('Mi'))
-            pvc_resize = str(pvc_size*(1+resize_percentage))+'Mi'
+    for pod, pvc in pod_pvc_info.items():
+        pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
+        pvc_resize_number = int(
+            math.ceil(pvc_size*(1+resize_percentage)))  # Upper function
+        pvc_resize_value = str(pvc_resize_number)+'Gi'
 
         spec_body = {'spec': {'resources': {
-            'requests': {'storage': pvc_resize}}}}
+            'requests': {'storage': pvc_resize_value}}}}
 
-        logging.info(f"SPEC_BODY: {spec_body}")
-
-        logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize}")
+        logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
         resize_response = v1.patch_namespaced_persistent_volume_claim(
             pvc[0], namespace, spec_body)
-        logging.info(f"resize_response: {resize_response}")
+
+        # Delete POD associated to PVC
+        delete_pods([pod], namespace)
+
+        # Wait until pod to Running State
+        watch_pods_state([pod], namespace, 'Running')
 
 
 def execute_exec_pods(exec_command, namespace, pod):
