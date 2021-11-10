@@ -53,12 +53,14 @@ def watch_pods_state(pods, namespace, desired_state='Pending'):
                           label_selector=f"app=couchdb, statefulset.kubernetes.io/pod-name={pods[0]}"):
         status_pod = event['object'].status.phase
 
-        terminating = True if status_pod == 'Pending' else False
+        logging.info(
+            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+
+        if status_pod == 'Pending':
+            terminating = True
 
         if status_pod == desired_state and terminating:
             pods_status[event['object'].metadata.name] = True
-            logging.info(
-                f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
 
         # Check if all pods are in desired_state
         if all(pods_status.values()):
