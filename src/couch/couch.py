@@ -1,5 +1,6 @@
 import couchdb
 import logging
+import random
 import time
 from pprint import pprint
 from faker import Faker
@@ -50,6 +51,7 @@ def generate_random_data(n_rows):
                'phone_number': fake.phone_number(),
                'email': fake.ascii_company_email(),
                'cordinates': str(fake.latlng()),
+               'age': random.randint(1, 30),
                'image': str(fake.image(size=(2, 2), hue='purple', luminosity='bright', image_format='pdf'))}
 
         data.append(doc)

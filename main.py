@@ -93,6 +93,10 @@ def main():
             scenario_3_resize_pvc(
                 namespace, pods)
 
+        elif scenario == 4:
+            scenario_4_stress_couchdb(
+                couchdb_url, n_rows, n_it, clear=True)
+
     elif len(args) == 2 and args[0] == '--script':
         script = int(args[1])
         if script == 1:
