@@ -4,3 +4,4 @@ __pycache__/
 secret.yaml
 /src/*.json
 couch-config.yml
+autoscaler/
