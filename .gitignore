@@ -5,3 +5,5 @@ secret.yaml
 /src/*.json
 couch-config.yml
 autoscaler/
+couch-json/
+charts/datadog/
