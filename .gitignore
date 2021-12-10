@@ -7,3 +7,4 @@ couch-config.yml
 autoscaler/
 couch-json/
 charts/datadog/
+*.txt
