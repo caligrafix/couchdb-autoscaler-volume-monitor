@@ -53,3 +53,9 @@ def tag_zone_nodes(couchdb_url, namespace):
     """
     pods = get_pods(namespace, label_selector='app=couchdb')
     logging.info(f'pods: {pods}')
+
+    nodes = get_nodes()
+    logging.info(f"nodes: {nodes}")
+
+    # logging.info(f"get nodes pods...")
+    # nodes_pods = get_nodes_pods(namespace, label_selector='app=couchdb', node_name=)

@@ -18,13 +18,14 @@ v1 = client.CoreV1Api()
 appsV1Api = client.AppsV1Api()
 
 
-def get_pods(namespace, label_selector=None):
+def get_pods(namespace, label_selector=None, field_selector=None):
     """
     List pods in specific namespace and return pod list with podnames
     """
     pods = []
     logging.info(f"Listing pods in namespace: {namespace}")
-    pod_list = v1.list_namespaced_pod(namespace, label_selector=label_selector)
+
+    pod_list = v1.list_namespaced_pod(namespace, label_selector=label_selector, field_selector=field_selector)
 
     for pod in pod_list.items:
         logging.info("%s\t%s\t%s" % (pod.metadata.name,
@@ -32,6 +33,15 @@ def get_pods(namespace, label_selector=None):
                                      pod.status.pod_ip))
         pods.append(pod.metadata.name)
     return pods
+
+
+def get_nodes_pods(namespace, label_selector, node_name):
+    nodes_pods = {}
+    field_selector = 'spec.nodeName='+node_name
+    logging.info(f"get pods of node: {node_name}")
+    pods = get_pods(namespace, field_selector=field_selector)
+    nodes_pods[node_name] = pods
+    return nodes_pods
 
 
 def delete_pods(pods, namespace):
@@ -138,3 +148,17 @@ def get_pods_volumes_info(namespace, pods, mount_volume_path):
         pods_volumes_info[pod] = perc_usage
 
     return pods_volumes_info
+
+
+def get_nodes():
+    logging.info("Getting k8s nodes...")
+    nodes = []
+    nodes_iter = v1.list_node()
+    for node in nodes_iter.items:
+        node_info = {}
+        node_info['name'] = node.metadata.name
+        node_info['zone'] = node.metadata.labels['topology.kubernetes.io/zone']
+        nodes.append(node_info)
+    
+    return nodes
+
