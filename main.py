@@ -69,12 +69,12 @@ def main():
 
     elif len(args) == 2 and args[0] == '--script':
         script = int(args[1])
-        if script == 1:
+        if script == 0:
             script_1_monitor_scale_pvc(
                 namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE)
 
-        elif script == 2:
-            tag_zone_nodes(namespace)
+        elif script == 1:
+            tag_zone_nodes(couchdb_url, namespace)
 
     else:
         raise Exception(

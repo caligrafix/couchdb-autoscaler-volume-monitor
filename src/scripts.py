@@ -44,9 +44,12 @@ def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_P
         f"%Use > 50%, Scaling PVC associated to POD {greater_pod_vol}")
 
 
-def tag_zone_nodes(namespace):
+def tag_zone_nodes(couchdb_url, namespace):
     """
     Steps
+    0. Get PODS with label app=couchdb
     1. Get memberships of cluster
 
     """
+    pods = get_pods(namespace, label_selector='app=couchdb')
+    logging.info(f'pods: {pods}')
