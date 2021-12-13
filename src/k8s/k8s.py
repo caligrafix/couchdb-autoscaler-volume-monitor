@@ -18,13 +18,13 @@ v1 = client.CoreV1Api()
 appsV1Api = client.AppsV1Api()
 
 
-def get_pods(namespace):
+def get_pods(namespace, label_selector=None):
     """
     List pods in specific namespace and return pod list with podnames
     """
     pods = []
     logging.info(f"Listing pods in namespace: {namespace}")
-    pod_list = v1.list_namespaced_pod(namespace)
+    pod_list = v1.list_namespaced_pod(namespace, label_selector=label_selector)
 
     for pod in pod_list.items:
         logging.info("%s\t%s\t%s" % (pod.metadata.name,
