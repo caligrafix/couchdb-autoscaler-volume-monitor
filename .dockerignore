@@ -1,4 +1,11 @@
+/autoscaler
+/charts
+/couch-json
+/k8s-files
 /k8s-python
+/scripts
+reset-couch-helm.sh
+README.md
+Dockerfile
 __pycache__/
 .gitignore
-secret.yaml
