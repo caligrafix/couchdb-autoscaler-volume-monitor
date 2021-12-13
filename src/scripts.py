@@ -42,3 +42,11 @@ def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_P
 
     logging.info(
         f"%Use > 50%, Scaling PVC associated to POD {greater_pod_vol}")
+
+
+def tag_zone_nodes(namespace):
+    """
+    Steps
+    1. Get memberships of cluster
+
+    """
