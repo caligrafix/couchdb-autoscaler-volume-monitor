@@ -1,6 +1,8 @@
 import couchdb
+import json
 import logging
 import random
+import requests
 import time
 from pprint import pprint
 from faker import Faker
@@ -123,3 +125,44 @@ def compare_data(couchdb_client, fake_data):
             attempts += 1
             logging.info("Sleeping 30 seconds and retrying")
             time.sleep(30)
+
+
+def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
+    '''
+    Tag couchdb cluster nodes (pods) with zone attribute
+
+    :zone (str) : zone of node that pod is allocated
+    :pods (list): list of couchdb nodes
+    '''
+    url_string = couchdb_url+'_node/_local/_nodes/'
+
+    for node in nodes_with_pods:
+        zone = node['zone']
+        node_name = node['node']
+        pods = node['pods']
+        logging.info(f"tagging nodes on {node_name} with zone {zone}")
+        for pod in pods:
+            full_url = url_string + f"couchdb@{pod}.couchdb-couchdb.couchdb.svc.cluster.local"
+
+            #Step 0
+            logging.info(f"node {pod} before tagging")
+            res = requests.get(full_url).json()
+            logging.info(f'get before node res: {res}')
+
+            #Step 1
+            logging.info(f"tagging node {pod}")
+            payload = {
+                '_id' : res['_id'],
+                '_rev': res['_rev'],
+                'zone': zone
+            }
+            res = requests.put(full_url, data=payload)
+            logging.info(f"update node res: {res.json()}")
+
+            #Step 2
+            logging.info(f"node {pod} after tagging")
+            res = requests.get(full_url).json()
+            logging.info(f'get before node res: {res}')
+
+
+

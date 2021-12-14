@@ -55,6 +55,8 @@ def tag_zone_nodes(couchdb_url, namespace):
 
 
     """
+    couchdb_client = get_couch_client(couchdb_url)
+
     pods = get_pods(namespace, label_selector='app=couchdb')
     logging.info(f'pods: {pods}')
 
@@ -66,4 +68,4 @@ def tag_zone_nodes(couchdb_url, namespace):
 
     logging.info(f"nodes with pods: {nodes_with_pods}")
 
-    tag_cluster_nodes(nodes_with_pods)
+    tag_cluster_nodes(couchdb_url, nodes_with_pods)
