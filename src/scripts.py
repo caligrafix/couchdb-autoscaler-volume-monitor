@@ -53,19 +53,22 @@ def tag_zone_nodes(couchdb_url, namespace):
     3. Tag each couchdb node (pod) with zone attribute of node that it's placed on
 
 
-
     """
-    couchdb_client = get_couch_client(couchdb_url)
 
     pods = get_pods(namespace, label_selector='app=couchdb')
     logging.info(f'pods: {pods}')
+    logging.info(f'--------------------------------------')
 
     nodes = get_nodes()
     logging.info(f"nodes: {nodes}")
+    logging.info(f'--------------------------------------')
 
     logging.info(f"get nodes pods...")
     nodes_with_pods = get_nodes_pods(nodes)
+    logging.info(f'--------------------------------------')
 
     logging.info(f"nodes with pods: {nodes_with_pods}")
+    logging.info(f'--------------------------------------')
+
 
     tag_cluster_nodes(couchdb_url, nodes_with_pods)

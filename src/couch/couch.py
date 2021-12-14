@@ -152,17 +152,23 @@ def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
             #Step 1
             logging.info(f"tagging node {pod}")
             payload = {
-                '_id' : res['_id'],
-                '_rev': res['_rev'],
-                'zone': zone
+                "_id" : res["_id"],
+                "_rev": res["_rev"],
+                "zone": zone
             }
-            res = requests.put(full_url, data=payload)
+
+            try:
+                res = requests.put(full_url, json=payload)
+                res.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                logging.info(f'error: {e}')
             logging.info(f"update node res: {res.json()}")
 
+       
             #Step 2
             logging.info(f"node {pod} after tagging")
             res = requests.get(full_url).json()
-            logging.info(f'get before node res: {res}')
+            logging.info(f'get after node res: {res}')
 
 
 
