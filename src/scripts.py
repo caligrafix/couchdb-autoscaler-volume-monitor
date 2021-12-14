@@ -47,8 +47,12 @@ def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_P
 def tag_zone_nodes(couchdb_url, namespace):
     """
     Steps
-    0. Get PODS with label app=couchdb
-    1. Get memberships of cluster
+    
+    1. Get nodes and zones 
+    2. Get pods of each node filtering by field selector
+    3. Tag each couchdb node (pod) with zone attribute of node that it's placed on
+
+
 
     """
     pods = get_pods(namespace, label_selector='app=couchdb')
@@ -57,5 +61,9 @@ def tag_zone_nodes(couchdb_url, namespace):
     nodes = get_nodes()
     logging.info(f"nodes: {nodes}")
 
-    # logging.info(f"get nodes pods...")
-    # nodes_pods = get_nodes_pods(namespace, label_selector='app=couchdb', node_name=)
+    logging.info(f"get nodes pods...")
+    nodes_with_pods = get_nodes_pods(nodes)
+
+    logging.info(f"nodes with pods: {nodes_with_pods}")
+
+    tag_cluster_nodes(nodes_with_pods)

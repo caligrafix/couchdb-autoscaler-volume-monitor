@@ -35,14 +35,36 @@ def get_pods(namespace, label_selector=None, field_selector=None):
     return pods
 
 
-def get_nodes_pods(namespace, label_selector, node_name):
-    nodes_pods = {}
+def get_node_pods(namespace, label_selector, node_name):
+    '''
+    Return a list of pods for specific node 
+
+    :namespace (str)        : K8s namespace, default couchdb
+    :label_selector (str)   : Selector to filter pods in k8s, default app=couchdb
+    :node_name (str)        : Name of K8s node
+
+    '''
     field_selector = 'spec.nodeName='+node_name
     logging.info(f"get pods of node: {node_name}")
-    pods = get_pods(namespace, field_selector=field_selector)
-    nodes_pods[node_name] = pods
-    return nodes_pods
+    pods = get_pods(namespace, label_selector=label_selector, field_selector=field_selector)
+    
+    return pods
 
+
+def get_nodes_pods(nodes: list):
+    ''' 
+    Add list of pods for nodes dictionary
+
+    :nodes (dict): List of Dictionaries with nodes information
+
+    Return nodes with list of pods
+    '''
+    for node in nodes:
+        node_pods = get_node_pods(namespace='couchdb', label_selector='app=couchdb', node_name=node['node'])
+        node['pods'] = node_pods
+    
+    return nodes
+    
 
 def delete_pods(pods, namespace):
     logging.info(f"Deleting PODS {pods} in namespace {namespace}")
@@ -156,7 +178,7 @@ def get_nodes():
     nodes_iter = v1.list_node()
     for node in nodes_iter.items:
         node_info = {}
-        node_info['name'] = node.metadata.name
+        node_info['node'] = node.metadata.name
         node_info['zone'] = node.metadata.labels['topology.kubernetes.io/zone']
         nodes.append(node_info)
     
