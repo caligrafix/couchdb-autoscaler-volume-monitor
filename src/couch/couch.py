@@ -168,3 +168,21 @@ def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
 
 
 
+def finish_cluster_setup(couchdb_url):
+    """
+    Make http request to finish cluster setup 
+
+    echo 'finish cluster setup'
+    curl -s http://QIvMWnriiEmNMrih:mWclZkABuWRvTmGu@couchdb-svc-couchdb.couchdb.svc.cluster.local:5984/_cluster_setup \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -d '{"action": "finish_cluster"}'
+
+    """
+
+    url_string = couchdb_url+'_cluster_setup'
+    headers = {'content-type': 'application/json'}
+    payload = '{"action": "finish_cluster"}'
+
+    res = requests.post(url_string, headers=headers, data=payload)
+    logging.info(f'finish cluster setup response: {res.json()}')

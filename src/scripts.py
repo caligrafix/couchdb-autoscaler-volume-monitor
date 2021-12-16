@@ -52,7 +52,7 @@ def tag_zone_nodes(couchdb_url, namespace):
     2. Make sure that all couchdb pods are in running state before apply tagging
     3. Get pods of each node filtering by field selector
     4. Tag each couchdb node (pod) with zone attribute of node that it's placed on
-
+    5. Final step: Make requests to finish cluster setup
 
     """
 
@@ -76,3 +76,8 @@ def tag_zone_nodes(couchdb_url, namespace):
 
 
     tag_cluster_nodes(couchdb_url, nodes_with_pods)
+
+    finish_cluster_setup(couchdb_url)
+
+    logging.info("Finish script successfully :)")
+
