@@ -146,7 +146,6 @@ def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
 
             #Step 0
             res = requests.get(full_url).json()
-            logging.info(f'node doc before tagging: {res}')
 
             #Step 1
             payload = {
