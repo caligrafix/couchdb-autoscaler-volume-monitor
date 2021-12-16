@@ -76,27 +76,35 @@ def delete_pods(pods, namespace):
                 "Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
 
 
-def watch_pods_state(pods, namespace, desired_state='Pending'):
-    terminating = False
-    pods_status = {pod: False for pod in pods}
+def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str = 'Pending'):
+    '''
+    Watch pods state and wait until they are all in the desired desired_state state
+    
+    :pods (list)        : List of pods names
+    :namespace (str)    : Namespace to watch pods
+    :labels (str)       : Labels to filter pods 
+    :desired_state (str): Desired state for pods
+    '''
+    # terminating = False
+    pods_desired_status = {pod: False for pod in pods}
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
                           namespace=namespace,
-                          label_selector=f"app=couchdb, statefulset.kubernetes.io/pod-name={pods[0]}"):
+                          label_selector=labels):
         status_pod = event['object'].status.phase
 
         logging.info(
             f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
 
-        if status_pod == 'Pending':
-            terminating = True
+        # if status_pod == 'Pending':
+        #     terminating = True
 
-        if status_pod == desired_state and terminating:
-            pods_status[event['object'].metadata.name] = True
+        if status_pod == desired_state:
+            pods_desired_status[event['object'].metadata.name] = True
 
         # Check if all pods are in desired_state
-        if all(pods_status.values()):
-            logging.info(f"All desired pods are in {desired_state} State")
+        if all(pods_desired_status.values()):
+            logging.info(f"All pods are in {desired_state} State")
             w.stop()
         else:
             logging.info(f"Not all pods are {desired_state}...")
