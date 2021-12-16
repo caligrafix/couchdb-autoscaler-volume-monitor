@@ -48,7 +48,7 @@ def tag_zone_nodes(couchdb_url, namespace):
     """
     Steps
     
-    1. Get nodes and zones 
+    1. Get nodes and zones
     2. Get pods of each node filtering by field selector
     3. Tag each couchdb node (pod) with zone attribute of node that it's placed on
 
