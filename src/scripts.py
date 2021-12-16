@@ -49,15 +49,19 @@ def tag_zone_nodes(couchdb_url, namespace):
     Steps
     
     1. Get nodes and zones
-    2. Get pods of each node filtering by field selector
-    3. Tag each couchdb node (pod) with zone attribute of node that it's placed on
+    2. Make sure that all couchdb pods are in running state before apply tagging
+    3. Get pods of each node filtering by field selector
+    4. Tag each couchdb node (pod) with zone attribute of node that it's placed on
 
 
     """
 
+    
     pods = get_pods(namespace, label_selector='app=couchdb')
     logging.info(f'pods: {pods}')
     logging.info(f'--------------------------------------')
+
+    watch_pods_state(pods, namespace, labels="app=couchdb", desired_state="Running")
 
     nodes = get_nodes()
     logging.info(f"nodes: {nodes}")
