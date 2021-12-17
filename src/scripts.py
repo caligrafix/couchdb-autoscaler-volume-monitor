@@ -3,32 +3,37 @@ from src.k8s.k8s import *
 from .scenarios import scenario_3_resize_pvc
 
 
-def script_1_monitor_scale_pvc(namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE):
-    """
-    1. Monitoring the size of PV associate to pod with df command
-    2. If size exceeds the defined threshold
-      5.1. Scale PVC
-    """
-    greater_vol_perc_usage = 0
+def monitor_and_scale_pvc(namespace: str, pods: list, VOLUME_THRESHOLD: float, \
+                            MOUNT_VOLUME_PATH: str, VOLUME_RESIZE_PERCENTAGE: float):
+    '''Monitor size of PVCs associated to Pods and
+    Scale the storage capacity based on threshold 
+    defined in env variables. 
 
-    logging.info(f"Start Loop")
+    Args:
+        namespace               : k8s namespace to monitor pods volumes
+        pods                    : list of pods names to monitor his volumes
+        VOLUME_THRESHOLD        : threshold defined to trigger resize 
+        MOUNT_VOLUME_PATH       : path inside pod that the volume is mounted on
+        VOLUME_RESIZE_PERCENTAGE: percentage to increase the volume size
+    '''
+    greater_vol_perc_usage = 0 # The great value of capacity usage of all volumes
+    pods_over_threshold = [] # List of pods that are over threshold
 
     pods_volumes_info = get_pods_volumes_info(
         namespace, pods, MOUNT_VOLUME_PATH
     )
 
-    pods_over_threshold = []
-
+    # Add pods to pods_over_threshold if % usage is over (or equal) threshold
     for pod, size in pods_volumes_info.items():
         if size >= VOLUME_THRESHOLD:
             pods_over_threshold.append(pod)
 
-    greater_pod_vol = max(pods_volumes_info, key=pods_volumes_info.get)
-    greater_vol_perc_usage = pods_volumes_info[greater_pod_vol]
+    greater_pod_vol = max(pods_volumes_info, key=pods_volumes_info.get) #pod with greater value of usage
+    greater_vol_perc_usage = pods_volumes_info[greater_pod_vol] #value of greater % usage from the above pod
 
     logging.info(f"% Use of all pods: {pods_volumes_info}")
     logging.info(f"Pods over threshold: {pods_over_threshold}")
-    logging.info(f"% Pod with greater vol: {greater_pod_vol}")
+    logging.info(f"Pod with greater vol: {greater_pod_vol}")
     logging.info(f"% Use greater vol: {greater_vol_perc_usage}")
 
     # Check size is upper VOLUME_UMBRAL
@@ -79,5 +84,5 @@ def tag_zone_nodes(couchdb_url, namespace):
 
     finish_cluster_setup(couchdb_url)
 
-    logging.info("Finish script successfully :)")
+    logging.info("Finish init cluster setup successfully")
 
