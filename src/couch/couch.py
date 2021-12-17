@@ -3,6 +3,8 @@ import json
 import logging
 import random
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import time
 from pprint import pprint
 from faker import Faker
@@ -136,6 +138,10 @@ def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
     '''
     url_string = couchdb_url+'_node/_local/_nodes/'
 
+    s = requests.Session()
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[ 404 ])
+    s.mount(url_string, HTTPAdapter(max_retries=retries))
+
     for node in nodes_with_pods:
         zone = node['zone']
         node_name = node['node']
@@ -145,40 +151,37 @@ def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
             full_url = url_string + f"couchdb@{pod}.couchdb-couchdb.couchdb.svc.cluster.local"
 
             #Step 0
-            res = requests.get(full_url).json()
+            res0 = requests.get(full_url).json()
 
             #Step 1
             payload = {
-                "_id" : res["_id"],
-                "_rev": res["_rev"],
+                "_id" : res0["_id"],
+                "_rev": res0["_rev"],
                 "zone": zone
             }
 
             # try:
-            res = requests.put(full_url, json=payload)
-            res.raise_for_status()
-            logging.info(f"update node res: {res.json()}")
-            # except requests.exceptions.RequestException as e:
-            #     logging.info(f'error: {e}')
-
+            res_put = requests.put(full_url, json=payload, params={'w':3})
+            res_put.raise_for_status()
+            logging.info(f"update node res: {res_put.json()}")
+            # Get latest rev to find the updated doc 
+            last_rev = res_put.json()['rev']
        
             #Step 2
-            res = requests.get(full_url).json()
-            logging.info(f'node doc after tagging: {res}')
+            # time.sleep(1)
+            res_final_get = s.get(full_url, params={'rev': last_rev})
+            res_final_get.raise_for_status()
+            logging.info(f'node doc after tagging: {res_final_get.json()}')
+            logging.info(f'node doc after tagging: {res_final_get.status_code}')
 
 
 
-def finish_cluster_setup(couchdb_url):
-    """
-    Make http request to finish cluster setup 
+def finish_cluster_setup(couchdb_url: str):
+    '''Make http request to finish cluster setup
 
-    echo 'finish cluster setup'
-    curl -s http://QIvMWnriiEmNMrih:mWclZkABuWRvTmGu@couchdb-svc-couchdb.couchdb.svc.cluster.local:5984/_cluster_setup \
-    -X POST \
-    -H "Content-Type: application/json" \
-    -d '{"action": "finish_cluster"}'
-
-    """
+    Args:
+        couchdb_url (str): URL String CouchDB
+    '''
 
     url_string = couchdb_url+'_cluster_setup'
     headers = {'content-type': 'application/json'}
