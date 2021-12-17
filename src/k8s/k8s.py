@@ -25,7 +25,8 @@ def get_pods(namespace, label_selector=None, field_selector=None):
     pods = []
     logging.info(f"Listing pods in namespace: {namespace}")
 
-    pod_list = v1.list_namespaced_pod(namespace, label_selector=label_selector, field_selector=field_selector)
+    pod_list = v1.list_namespaced_pod(
+        namespace, label_selector=label_selector, field_selector=field_selector)
 
     for pod in pod_list.items:
         logging.info("%s\t%s\t%s" % (pod.metadata.name,
@@ -46,8 +47,9 @@ def get_node_pods(namespace, label_selector, node_name):
     '''
     field_selector = 'spec.nodeName='+node_name
     logging.info(f"get pods of node: {node_name}")
-    pods = get_pods(namespace, label_selector=label_selector, field_selector=field_selector)
-    
+    pods = get_pods(namespace, label_selector=label_selector,
+                    field_selector=field_selector)
+
     return pods
 
 
@@ -60,11 +62,12 @@ def get_nodes_pods(nodes: list):
     Return nodes with list of pods
     '''
     for node in nodes:
-        node_pods = get_node_pods(namespace='couchdb', label_selector='app=couchdb', node_name=node['node'])
+        node_pods = get_node_pods(
+            namespace='couchdb', label_selector='app=couchdb', node_name=node['node'])
         node['pods'] = node_pods
-    
+
     return nodes
-    
+
 
 def delete_pods(pods, namespace):
     logging.info(f"Deleting PODS {pods} in namespace {namespace}")
@@ -77,30 +80,35 @@ def delete_pods(pods, namespace):
 
 
 def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str = 'Pending'):
+    '''Watch pods state and wait until they are all in the desired desired_state state
+
+    Args:
+        pods (list)             : List of pods names
+        namespace (str)         : Namespace to watch pods
+        labels (str)            : Labels to filter pods 
+        desired_state (str)     : Desired state for pods
+                                   
     '''
-    Watch pods state and wait until they are all in the desired desired_state state
     
-    :pods (list)        : List of pods names
-    :namespace (str)    : Namespace to watch pods
-    :labels (str)       : Labels to filter pods 
-    :desired_state (str): Desired state for pods
-    '''
-    # terminating = False
     pods_desired_status = {pod: False for pod in pods}
+    pods_status = {pod: None for pod in pods}
+
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
                           namespace=namespace,
                           label_selector=labels):
-        status_pod = event['object'].status.phase
+
+        # Check if pod is in pods list
+        if event['object'].metadata.name in pods:
+            pod = event['object'].metadata.name
+            pod_status = event['object'].status.phase
+            pods_status[pod] = pod_status
 
         logging.info(
             f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
 
-        # if status_pod == 'Pending':
-        #     terminating = True
-
-        if status_pod == desired_state:
-            pods_desired_status[event['object'].metadata.name] = True
+        if pods_status[pod] == desired_state:
+            pods_desired_status[pod] = True
 
         # Check if all pods are in desired_state
         if all(pods_desired_status.values()):
@@ -110,7 +118,59 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
             logging.info(f"Not all pods are {desired_state}...")
 
 
-def get_related_pod_pvc(pods, namespace):
+def watch_pod_resurrect(pods: list, namespace: str, labels: str):
+    '''Watch for pod terminating and running again
+
+    Args:
+        pods (list)             : List of pods names
+        namespace (str)         : Namespace to watch pods
+        labels (str)            : Labels to filter pods 
+                                   
+    '''
+    pods_status = {pod: None for pod in pods}
+    pods_terminating = {pod: False for pod in pods}
+    pods_running_after_terminating = {pod: None for pod in pods}
+
+    w = watch.Watch()
+    for event in w.stream(func=v1.list_namespaced_pod,
+                          namespace=namespace,
+                          label_selector=labels):
+
+        # Check if pod is in pods list
+        if event['object'].metadata.name in pods:
+            pod = event['object'].metadata.name
+            pod_status = event['object'].status.phase
+            pods_status[pod] = pod_status
+
+        logging.info(
+            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+
+        if pods_status[pod] == 'Terminating':
+            pods_terminating[pod] = True
+
+        if pods_terminating[pod] and pods_status[pod] == 'Running':
+            pods_running_after_terminating[pod] = True
+
+        # Check if all pods are in desired_state
+        if all(pods_running_after_terminating.values()):
+            logging.info(f"All pods are recreated and running again")
+            w.stop()
+        else:
+            logging.info(f"Not all pods are recreated yet...")
+
+
+def get_related_pod_pvc(pods: list, namespace: str):
+    '''Get associated pvc to pods
+
+    Args:
+        pods (list)     : list of pods names to get his pvc information
+        namespace (str) : k8s namespace to find pods and pvcs
+
+    Returns:
+        pod_pvc_info (dict): Dictionary with pod name as key, and value a list 
+                            with pvc name and % of usage of his associated pv. 
+                            {'pod1': ['pvc1', 0.3], 'pod2': ['pvc2', 0.5],...}
+    '''
     pod_pvc_info = {}
     for pod in pods:
         pvc_info = []
@@ -140,6 +200,13 @@ def get_namespaces_pvc(namespace):
 
 
 def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
+    '''Patch pvc spec to increase the capacity of volumes
+
+    Args:
+        namespace (str)             : k8s namespace to manipulate pod and pvc objects
+        pod_pvc_info (dict)         : 
+        resize_percentage (float)   : 
+    '''
     for pod, pvc in pod_pvc_info.items():
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         pvc_resize_number = int(
@@ -157,7 +224,7 @@ def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
         delete_pods([pod], namespace)
 
         # Wait until pod to Running State
-        watch_pods_state([pod], namespace, 'Running')
+        watch_pod_resurrect([pod], namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={[pod]}')
 
 
 def execute_exec_pods(exec_command, namespace, pod):
@@ -166,7 +233,19 @@ def execute_exec_pods(exec_command, namespace, pod):
     return resp
 
 
-def get_pods_volumes_info(namespace, pods, mount_volume_path):
+def get_pods_volumes_info(namespace: str, pods: list, mount_volume_path: str):
+    '''Get usage's percentage of each volume associated to pods
+
+    Args:
+        namespace (str)         : namespace used for exec command in pods
+        pods (list)             : list of pods names monitoring
+        mount_volume_path (str) : volume path mounted inside pods
+
+    Returns:
+        pods_volumes_info (dict): Dictionary with pods and his % of
+                                   volume usage {'pod1':'0.3', 'pod2':0.4,..., 'podN':0.1}.
+    '''
+
     exec_command = ['df', '-Ph', mount_volume_path]
     pods_volumes_info = {}
 
@@ -189,6 +268,5 @@ def get_nodes():
         node_info['node'] = node.metadata.name
         node_info['zone'] = node.metadata.labels['topology.kubernetes.io/zone']
         nodes.append(node_info)
-    
-    return nodes
 
+    return nodes
