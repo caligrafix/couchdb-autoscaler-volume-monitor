@@ -71,7 +71,7 @@ def main():
         script = int(args[1])
         if script == 0:
             monitor_and_scale_pvc(
-                namespace, pods, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE)
+                namespace, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE)
 
         elif script == 1:
             tag_zone_nodes(couchdb_url, namespace)

@@ -129,7 +129,7 @@ def compare_data(couchdb_client, fake_data):
             time.sleep(30)
 
 
-def tag_cluster_nodes(couchdb_url, nodes_with_pods: list):
+def tag_cluster_nodes(couchdb_url: str, nodes_with_pods: list):
     '''
     Tag couchdb cluster nodes (pods) with zone attribute
 

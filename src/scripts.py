@@ -3,7 +3,7 @@ from src.k8s.k8s import *
 from .scenarios import scenario_3_resize_pvc
 
 
-def monitor_and_scale_pvc(namespace: str, pods: list, VOLUME_THRESHOLD: float, \
+def monitor_and_scale_pvc(namespace: str, VOLUME_THRESHOLD: float, \
                             MOUNT_VOLUME_PATH: str, VOLUME_RESIZE_PERCENTAGE: float):
     '''Monitor size of PVCs associated to Pods and
     Scale the storage capacity based on threshold 
@@ -18,6 +18,8 @@ def monitor_and_scale_pvc(namespace: str, pods: list, VOLUME_THRESHOLD: float, \
     '''
     greater_vol_perc_usage = 0 # The great value of capacity usage of all volumes
     pods_over_threshold = [] # List of pods that are over threshold
+
+    pods = get_pods(namespace, label_selector='app=couchdb')
 
     pods_volumes_info = get_pods_volumes_info(
         namespace, pods, MOUNT_VOLUME_PATH
