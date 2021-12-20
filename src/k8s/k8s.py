@@ -199,13 +199,13 @@ def get_namespaces_pvc(namespace):
     return v1.list_namespaced_persistent_volume_claim(namespace)
 
 
-def patch_namespaced_pvc(namespace, pod_pvc_info, resize_percentage):
+def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: float):
     '''Patch pvc spec to increase the capacity of volumes
 
     Args:
         namespace (str)             : k8s namespace to manipulate pod and pvc objects
-        pod_pvc_info (dict)         : 
-        resize_percentage (float)   : 
+        pod_pvc_info (dict)         : dict with pods and related pvc info
+        resize_percentage (float)   : percentage to increse size of volumes
     '''
     for pod, pvc in pod_pvc_info.items():
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
