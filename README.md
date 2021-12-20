@@ -17,3 +17,5 @@ Proof of concepts of resilience in CouchDB EKS Cluster.
 ### Example
 ```$ python main.py --scenario 1```
 
+
+ helm install vpa-v0 --values charts/vpa-values.yaml cowboysysop/vertical-pod-autoscaler
