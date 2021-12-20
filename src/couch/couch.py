@@ -161,7 +161,7 @@ def tag_cluster_nodes(couchdb_url: str, nodes_with_pods: list):
             }
 
             # try:
-            res_put = requests.put(full_url, json=payload, params={'w':3})
+            res_put = requests.put(full_url, json=payload, params={'w':24})
             res_put.raise_for_status()
             logging.info(f"update node res: {res_put.json()}")
             # Get latest rev to find the updated doc 
@@ -170,6 +170,7 @@ def tag_cluster_nodes(couchdb_url: str, nodes_with_pods: list):
             #Step 2
             # time.sleep(1)
             res_final_get = s.get(full_url, params={'rev': last_rev})
+            #TODO Verificar zone 
             res_final_get.raise_for_status()
             logging.info(f'node doc after tagging: {res_final_get.json()}')
             logging.info(f'node doc after tagging: {res_final_get.status_code}')
