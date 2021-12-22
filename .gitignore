@@ -8,3 +8,4 @@ autoscaler/
 couch-json/
 charts/datadog/
 *.txt
+tests/
