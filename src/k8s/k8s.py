@@ -145,7 +145,7 @@ def watch_pod_resurrect(pods: list, namespace: str, labels: str):
         logging.info(
             f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
 
-        if pods_status[pod] == 'Terminating':
+        if pods_status[pod] == 'Pending':
             pods_terminating[pod] = True
 
         if pods_terminating[pod] and pods_status[pod] == 'Running':
@@ -210,7 +210,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
     for pod, pvc in pod_pvc_info.items():
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         pvc_resize_number = int(
-            math.ceil(pvc_size*(1+resize_percentage)))  # Upper function
+            math.ceil(pvc_size*(resize_percentage)))  # Upper function
         pvc_resize_value = str(pvc_resize_number)+'Gi'
 
         spec_body = {'spec': {'resources': {
@@ -224,7 +224,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         delete_pods([pod], namespace)
 
         # Wait until pod to Running State
-        watch_pod_resurrect([pod], namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={[pod]}')
+        watch_pod_resurrect([pod], namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
 
 
 def execute_exec_pods(exec_command, namespace, pod):
