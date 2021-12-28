@@ -28,17 +28,22 @@ def get_database_info(couchdb_client):
         logging.info(f"{db}_total_rows: {couchdb_client[db].info()}")
 
 
-def select_or_create_db(couchserver, db_name):
-    if db_name in couchserver:
-        db = couchserver[db_name]
-        # logging.info(f"{db_name} already exist in couch")
-    else:
-        # logging.info(f"creating db {db_name}")
+def select_or_create_db(couchdb_client, db_name):
+    while True:
         try:
-            db = couchserver.create(db_name)
-        except Exception as error:
-            logging.info(f"Exception: {error}, use db already created")
-            db = couchserver[db_name]
+            if db_name in couchdb_client:
+                db = couchdb_client[db_name]
+            else:
+                try:
+                    db = couchdb_client.create(db_name)
+                except Exception as error:
+                    logging.info(f"Exception: {error}, database '{db_name}' already created")
+                    db = couchdb_client[db_name]
+
+        except couchdb.http.ServerError as e:
+            logging.info(f'Exception {e}, trying again...')
+            continue
+        break
 
     return db
 
@@ -63,8 +68,19 @@ def generate_random_data(n_rows):
 
 
 def populate_db(db, data):
-    # logging.info(f"populate {db} with {len(data)} rows")
-    return db.update(data)
+    count=0
+    while True:
+        count+=1
+        try:
+            logging.info(f"retry: {count}")
+            db.update(data)
+        except Exception as e:
+            logging.info(f"exception: {e}")
+            logging.info(f"sleep: 60")
+            time.sleep(60)
+            continue
+        break
+    return
 
 
 def populate_dbs(couchdb_client, db_names, fake_data):
@@ -188,5 +204,10 @@ def finish_cluster_setup(couchdb_url: str):
     headers = {'content-type': 'application/json'}
     payload = '{"action": "finish_cluster"}'
 
-    res = requests.post(url_string, headers=headers, data=payload)
+    s = requests.Session()
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[ 404 ])
+    s.mount(url_string, HTTPAdapter(max_retries=retries))
+
+    res = s.post(url_string, headers=headers, data=payload)
+    res.raise_for_status()
     logging.info(f'finish cluster setup response: {res.json()}')
