@@ -21,6 +21,8 @@ def monitor_and_scale_pvc(namespace: str, VOLUME_THRESHOLD: float, \
 
     pods = get_pods(namespace, label_selector='app=couchdb')
 
+    watch_pods_state(pods, namespace, labels='app=couchdb', desired_state='Running')
+
     pods_volumes_info = get_pods_volumes_info(
         namespace, pods, MOUNT_VOLUME_PATH
     )
