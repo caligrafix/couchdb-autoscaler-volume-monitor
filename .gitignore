@@ -9,3 +9,4 @@ couch-json/
 charts/datadog/
 *.txt
 tests/
+*/couchdb/custom-values.yaml
