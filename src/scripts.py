@@ -83,10 +83,9 @@ def tag_zone_nodes(couchdb_url, namespace):
     logging.info(f"nodes with pods: {nodes_with_pods}")
     logging.info(f'--------------------------------------')
 
-
     tag_cluster_nodes(couchdb_url, nodes_with_pods)
 
-    finish_cluster_setup(couchdb_url)
+    # finish_cluster_setup(couchdb_url)
 
     logging.info("Finish init cluster setup successfully")
 
