@@ -1,5 +1,4 @@
 import couchdb
-import json
 import logging
 import random
 import requests
@@ -184,13 +183,11 @@ def tag_cluster_nodes(couchdb_url: str, nodes_with_pods: list):
             last_rev = res_put.json()['rev']
        
             #Step 2
-            # time.sleep(1)
             res_final_get = s.get(full_url, params={'rev': last_rev})
             #TODO Verificar zone 
             res_final_get.raise_for_status()
             logging.info(f'node doc after tagging: {res_final_get.json()}')
             logging.info(f'node doc after tagging: {res_final_get.status_code}')
-
 
 
 def finish_cluster_setup(couchdb_url: str):
@@ -201,7 +198,7 @@ def finish_cluster_setup(couchdb_url: str):
     '''
 
     url_string = couchdb_url+'_cluster_setup'
-    headers = {'content-type': 'application/json'}
+    headers = {"content-type": "application/json"}
     payload = '{"action": "finish_cluster"}'
 
     s = requests.Session()
