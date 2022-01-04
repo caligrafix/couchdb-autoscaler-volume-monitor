@@ -1,6 +1,6 @@
 # CouchDB k8s Cluster 
 
-This repo contains three main topics, can be used in conjunction with (fsalazar helm repo) to setup a cluster of couchdb with automated placement tagging and volume monitor and autoscaling with Helm. For more information visit the repo and follow instructions to deploy. 
+This repo contains three main topics, can be used in conjunction with [couchdb-helm repo](https://github.com/fsalazarh/couchdb-helm/tree/cluster_config) to setup a cluster of couchdb with automated placement tagging and volume monitor and autoscaling with Helm. For more information visit the repo and follow instructions to deploy.
 
 Table of Contents
 - [CouchDB k8s Cluster](#couchdb-k8s-cluster)
