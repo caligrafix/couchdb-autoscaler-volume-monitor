@@ -11,7 +11,8 @@ def main():
     args = sys.argv[1:]
 
     if len(args) == 1 and args[0] == '--volume-monitor':
-        monitor_and_scale_pvc(couchdb_url, namespace)
+        monitor_and_scale_pvc(
+                namespace, VOLUME_THRESHOLD, MOUNT_VOLUME_PATH, VOLUME_RESIZE_PERCENTAGE)
 
     else:
         raise Exception(
