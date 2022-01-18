@@ -7,4 +7,4 @@ RUN pip3 install -r requirements.txt
 
 ENTRYPOINT ["python", "main.py"]
 
-CMD ["--scenario", "1"]
+CMD ["--volume-monitor"]

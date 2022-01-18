@@ -275,3 +275,29 @@ def get_nodes():
         nodes.append(node_info)
 
     return nodes
+
+
+def resize_pods_pvc(namespace, pods, VOLUME_RESIZE_PERCENTAGE):
+    '''Resize pvc associate to a specific pods
+
+    Args:
+        namespace (str)                 : k8s namespace to find pods
+        pods (list)                     : list of pods names to resize his PVC
+        VOLUME_RESIZE_PERCENTAGE (float): % of volume to increase capacity
+
+    Steps:
+        - Edit associate PVC to a pods:
+        - Edit spec.resources.requests.storage attribute
+        - Terminate Pod
+        - Watch status of pod and get new values to storage capacity
+
+    '''
+
+    logging.info(f"executing scenario 3")
+
+    # Get PVC Of Pods
+    pods_pvc_info = get_related_pod_pvc(pods, namespace)
+
+    # Patch PVC
+    logging.info(f"Patching PVC...")
+    patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
