@@ -106,7 +106,7 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
             pods_status[pod] = pod_status
 
             #Add containers statuses
-            if 'container_statuses' in event['object'].status:
+            if event['object'].status.container_statuses[0] is not None:
                 container_status = event['object'].status.container_statuses[0]
                 containers_status[pod] = container_status
             else:
