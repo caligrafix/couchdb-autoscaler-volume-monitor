@@ -92,6 +92,7 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
     
     pods_desired_status = {pod: False for pod in pods}
     pods_status = {pod: None for pod in pods}
+    containers_status = {pod: None for pod in pods}
 
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
@@ -102,10 +103,12 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
         if event['object'].metadata.name in pods:
             pod = event['object'].metadata.name
             pod_status = event['object'].status.phase
+            container_status = event['object'].status.container_statuses[0]
             pods_status[pod] = pod_status
+            containers_status[pod] = container_status
 
         logging.info(
-            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+            f"Event: {event['type']} {event['object'].kind} {pod} {pod_status} {container_status}")
 
         if pods_status[pod] == desired_state:
             pods_desired_status[pod] = True
