@@ -117,7 +117,7 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
             f"Event: {event['type']} {event['object'].kind} {pod} {pod_status}")
 
         logging.info(
-            f"Container: started - {container_status.started} ready - {container_status.ready}")
+            f"Container: started - {containers_status[pod].started} ready - {containers_status[pod].ready}")
 
         if pods_status[pod] == desired_state \
             and containers_status[pod].started \
