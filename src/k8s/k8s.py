@@ -99,18 +99,26 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
                           namespace=namespace,
                           label_selector=labels):
 
-        # Check if pod is in pods list
+        # Check pods information
         if event['object'].metadata.name in pods:
             pod = event['object'].metadata.name
             pod_status = event['object'].status.phase
-            container_status = event['object'].status.container_statuses[0]
+
+            #Add containers statuses
+            if event['object'].status.container_statuses[0]:
+                container_status = event['object'].status.container_statuses[0]
+                containers_status[pod] = container_status
+
             pods_status[pod] = pod_status
-            containers_status[pod] = container_status
 
         logging.info(
-            f"Event: {event['type']} {event['object'].kind} {pod} {pod_status} {container_status}")
+            f"Event: {event['type']} {event['object'].kind} {pod} {pod_status}")
+        logging.info(
+            f"Container: started - {container_status.started} ready - {container_status.ready}")
 
-        if pods_status[pod] == desired_state:
+        if pods_status[pod] == desired_state \
+            and containers_status[pod].started \
+                and containers_status[pod].ready:
             pods_desired_status[pod] = True
 
         # Check if all pods are in desired_state
