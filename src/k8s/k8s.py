@@ -103,16 +103,19 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
         if event['object'].metadata.name in pods:
             pod = event['object'].metadata.name
             pod_status = event['object'].status.phase
+            pods_status[pod] = pod_status
 
             #Add containers statuses
-            if event['object'].status.container_statuses[0]:
+            if 'container_statuses' in event['object'].status:
                 container_status = event['object'].status.container_statuses[0]
                 containers_status[pod] = container_status
-
-            pods_status[pod] = pod_status
+            else:
+                containers_status[pod].started = False
+                containers_status[pod].ready = False
 
         logging.info(
             f"Event: {event['type']} {event['object'].kind} {pod} {pod_status}")
+
         logging.info(
             f"Container: started - {container_status.started} ready - {container_status.ready}")
 
