@@ -235,7 +235,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         # delete_pods([pod], namespace)
 
         # Wait until pod to Running State
-        watch_pod_resurrect([pod], namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
+        watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
 
 
 def execute_exec_pods(exec_command: str, namespace: str, pod: str):
