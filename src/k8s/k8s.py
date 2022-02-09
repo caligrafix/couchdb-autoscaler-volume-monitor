@@ -132,7 +132,7 @@ def watch_pods_state(pods: list, namespace: str, labels: str, desired_state: str
             logging.info(f"Not all pods are {desired_state}...")
 
 
-def watch_pod_resurrect(pods: list, namespace: str, labels: str):
+def watch_pod_resurrect(pod: str, namespace: str, labels: str):
     '''Watch for pod terminating and running again
 
     Args:
@@ -141,9 +141,7 @@ def watch_pod_resurrect(pods: list, namespace: str, labels: str):
         labels (str)            : Labels to filter pods 
                                    
     '''
-    pods_status = {pod: None for pod in pods}
-    pods_terminating = {pod: False for pod in pods}
-    pods_running_after_terminating = {pod: None for pod in pods}
+    recreated = False
 
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
@@ -151,26 +149,21 @@ def watch_pod_resurrect(pods: list, namespace: str, labels: str):
                           label_selector=labels):
 
         # Check if pod is in pods list
-        if event['object'].metadata.name in pods:
-            pod = event['object'].metadata.name
+        if event['object'].metadata.name == pod and event['type'] == 'ADDED':
             pod_status = event['object'].status.phase
-            pods_status[pod] = pod_status
+            logging.info(f'pod {pod} ---- pod status: {pod_status}')
+            logging.info(
+                f"Event: {event['type']} {event['object'].kind} {pod} {pod_status}")
 
-        logging.info(
-            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+            if pod_status == 'Running':
+                recreated = True
 
-        if pods_status[pod] == 'Pending':
-            pods_terminating[pod] = True
-
-        if pods_terminating[pod] and pods_status[pod] == 'Running':
-            pods_running_after_terminating[pod] = True
-
-        # Check if all pods are in desired_state
-        if all(pods_running_after_terminating.values()):
-            logging.info(f"All pods are recreated and running again")
+        # Check if all pod are recreated
+        if recreated:
+            logging.info(f"Pod {pod} are recreated and running again")
             w.stop()
         else:
-            logging.info(f"Not all pods are recreated yet...")
+            logging.info(f"Pod {pod} still recreating...")
 
 
 def get_related_pod_pvc(pods: list, namespace: str):
