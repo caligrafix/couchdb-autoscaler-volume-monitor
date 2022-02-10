@@ -43,7 +43,7 @@ def monitor_and_scale_pvc(namespace: str, VOLUME_THRESHOLD: float, \
     if pods_over_threshold:
         logging.info(f"Resizing PVC of pods {pods_over_threshold}")
         resize_pods_pvc(
-            namespace, [pods_over_threshold], VOLUME_RESIZE_PERCENTAGE)
+            namespace, pods_over_threshold, VOLUME_RESIZE_PERCENTAGE)
     else:
         logging.info(f"No Volumes to Resize")
         return 0
