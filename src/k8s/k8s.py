@@ -197,9 +197,8 @@ def get_related_pod_pvc(pods: list, namespace: str):
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
 
-        # logging.info(f'pvc_info: {pvc_metadata}')
+        logging.info(f'pvc_info: {pvc_metadata}')
 
-        # pvc_size = pvc_info.spec.resources.requests['storage']
         pvc_size = pvc_metadata.status.capacity['storage']
 
         pvc_info.append(pvc_size)
@@ -220,7 +219,9 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         pod_pvc_info (dict)         : dict with pods and related pvc info
         resize_percentage (float)   : percentage to increse size of volumes
     '''
+    
     for pod, pvc in pod_pvc_info.items():
+        
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         pvc_resize_number = int(
             math.ceil(pvc_size*(resize_percentage)))  # Upper function
@@ -230,18 +231,41 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
             'requests': {'storage': pvc_resize_value}}}}
 
         logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
-        resize_response = v1.patch_namespaced_persistent_volume_claim(
-            pvc[0], namespace, spec_body)
-        
-        # #TODO: Add watch to PVC, catch success or error in update size EBS.
 
-        logging.info(f"resize response: {resize_response}")
+        # Watch and wait until pvc is resize
+        watch_pvc_resize(namespace, pod, pvc, spec_body)
+       
 
         # Delete POD associated to PVC
-        delete_pods([pod], namespace)
+        # delete_pods([pod], namespace)
 
-        # Wait until pod to Running State
-        watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
+        # # # Wait until pod to Running State
+        # watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
+
+
+def watch_pvc_resize(namespace, pvc, spec_body):
+    pvc_resizing = False
+    stop_watch = False
+    w = watch.Watch()
+    for event in w.stream(func=v1.list_namespaced_persistent_volume_claim,
+                        namespace=namespace):  
+        # logging.info(
+        #     f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
+        # logging.info(f"event: {event}")
+        # logging.info(f"event['object'].metadata.name: {event['object'].metadata.name}")
+        # logging.info(f"pvc[0]: {pvc[0]}")
+
+        if event['object'].metadata.name == pvc[0]:
+            if event['object'].status.conditions is not None:
+                if event['object'].status.conditions[0].type == "Resizing":
+                    pvc_resizing = True
+                    logging.info(f"pvc: {pvc[0]} is in Resizing state...")
+            else:
+                resize_response = v1.patch_namespaced_persistent_volume_claim(
+                    pvc[0], namespace, spec_body)
+                stop_watch = True
+                logging.info(f"resize response: {resize_response}")
+                w.stop()
 
 
 def execute_exec_pods(exec_command: str, namespace: str, pod: str):
@@ -312,5 +336,5 @@ def resize_pods_pvc(namespace, pods, VOLUME_RESIZE_PERCENTAGE):
     pods_pvc_info = get_related_pod_pvc(pods, namespace)
 
     # Patch PVC
-    logging.info(f"Patching PVC...")
-    patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
+    # logging.info(f"Patching PVC...")
+    # patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
