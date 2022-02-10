@@ -142,23 +142,28 @@ def watch_pod_resurrect(pod: str, namespace: str, labels: str):
                                    
     '''
     recreated = False
+    terminated = False
 
     w = watch.Watch()
     for event in w.stream(func=v1.list_namespaced_pod,
                           namespace=namespace,
                           label_selector=labels):
         logging.info(
-            f"Event: {event}")
+            f"Event: {event['type']} {event['object'].kind} {event['object'].metadata.name} {event['object'].status.phase}")
 
-        # Check if pod is in pods list
-        # if event['object'].metadata.name == pod and event['type'] == 'ADDED':
-        #     pod_status = event['object'].status.phase
-        #     logging.info(f'pod {pod} ---- pod status: {pod_status}')
-        #     logging.info(
-        #         f"Event: {event['type']} {event['object'].kind} {pod} {pod_status}")
+        #Check if pod is DELETED 
+        if event['type'] == 'DELETED' and event['object'].metadata.name == pod:
+            terminated = True
 
-        #     if pod_status == 'Running':
-        #         recreated = True
+        # Check if pod Running after terminated
+        if event['object'].metadata.name == pod and event['type'] == 'ADDED':
+            pod_status = event['object'].status.phase
+            logging.info(f'pod {pod} ---- pod status: {pod_status}')
+            logging.info(
+                f"Event: {event['type']} {event['object'].kind} {pod} {pod_status}")
+
+            if pod_status == 'Running' and terminated == True:
+                recreated = True
 
         # Check if all pod are recreated
         if recreated:
