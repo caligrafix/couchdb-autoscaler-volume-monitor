@@ -226,15 +226,15 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
             'requests': {'storage': pvc_resize_value}}}}
 
         logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
-        resize_response = v1.patch_namespaced_persistent_volume_claim(
-            pvc[0], namespace, spec_body)
+        # resize_response = v1.patch_namespaced_persistent_volume_claim(
+        #     pvc[0], namespace, spec_body)
         
-        #TODO: Add watch to PVC, catch success or error in update size EBS.
+        # #TODO: Add watch to PVC, catch success or error in update size EBS.
 
-        logging.info(f"resize response: {resize_response}")
+        # logging.info(f"resize response: {resize_response}")
 
         # Delete POD associated to PVC
-        # delete_pods([pod], namespace)
+        delete_pods([pod], namespace)
 
         # Wait until pod to Running State
         watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
