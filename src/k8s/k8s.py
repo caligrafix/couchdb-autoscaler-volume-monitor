@@ -236,7 +236,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         logging.info(f"vol_mods_cmd: {vol_mods_cmd}")
 
         try:
-            aws_response = subprocess.run(vol_mods_cmd.split(" "))
+            aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True)
             logging.info(f"aws response: {aws_response}")
 
         except subprocess.CalledProcessError as e:
