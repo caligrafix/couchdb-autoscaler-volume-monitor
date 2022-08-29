@@ -199,7 +199,7 @@ def get_related_pod_pvc(pods: list, namespace: str):
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
 
-        # logging.info(f'pvc_info: {pvc_metadata}')
+        logging.info(f'pvc_info: {pvc_metadata}')
         
         # Add PVC Size
         pvc_size = pvc_metadata.status.capacity['storage']
@@ -238,7 +238,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
 
         try:
             aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True, stdout=subprocess.PIPE)
-            logging.info(f"aws response: {aws_response}")
+            # logging.info(f"aws response: {aws_response}")
             aws_response_json = json.loads(aws_response.stdout)
             logging.info(f"aws response json: {aws_response_json}")
             volume_status = aws_response_json["VolumesModifications"][0]["ModificationState"] # TODO: With multiple modifications
@@ -253,10 +253,11 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
                 continue # Go to the next item in for loop, don't resize
 
         except subprocess.CalledProcessError as e:
-            # In case of non modified volume, continue
+            # In case of non modified volume, pass
             logging.info(e)
             pass #Continue executing resizing
         
+        logging.info(f"RESIZING PVC {pvc[0]} FROM POD {pod}")
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         pvc_resize_number = int(
             math.ceil(pvc_size*(resize_percentage)))  # Upper function
