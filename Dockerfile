@@ -2,8 +2,8 @@
 
 FROM python:3.8-slim-buster
 
-RUN apt-get update \
-	&& apt-get install curl \
+RUN apt update \
+	&& apt install curl \
 	&& curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
 	# && apt install unzip \
 	&& unzip awscliv2.zip \
