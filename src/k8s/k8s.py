@@ -236,9 +236,11 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         # Get volume id
         volume_metadata = v1.read_persistent_volume(pvc[2])
 
-        logging.info(f"Persistent volume metadata: {volume_metadata}")
-        
-        vol_mods_cmd='aws ec2 describe-volumes-modifications --volume-ids {volume_id}' 
+        volume_id = volume_metadata.spec.csi.volume_handle
+
+        vol_mods_cmd=f"aws ec2 describe-volumes-modifications --volume-ids {volume_id}"
+
+        subprocess.Popen(vol_mods_cmd, shell=True, stdout = subprocess.PIPE)
 
 
         # Check status of PVC 
