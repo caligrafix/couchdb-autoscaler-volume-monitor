@@ -1,8 +1,9 @@
-import json
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 
+import arrow
+import json
 import logging
 import math
 import subprocess
@@ -200,17 +201,6 @@ def get_related_pod_pvc(pods: list, namespace: str):
             namespace=namespace, name=pvc_name)
 
         logging.info(f'pvc_info: {pvc_metadata}')
-
-        logging.info(f'--------------------')
-        logging.info(f'--------------------')
-        logging.info(f'--------------------')
-        logging.info(f'--------------------')
-        logging.info(f'--------------------')
-
-
-        pvc_metadata_status = v1.read_namespaced_persistent_volume_claim_status(
-            namespace=namespace, name=pvc_name)
-        logging.info(f'pvc_info: {pvc_metadata_status}')
         
         # Add PVC Size
         pvc_size = pvc_metadata.status.capacity['storage']
@@ -256,7 +246,17 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
             
             if volume_status == "completed":
                 logging.info(f"volume {volume_id} is completed: proceed to resize")
-                pass
+                # Check that pass at least six hours to last resizing event
+                volume_status_timestamp = aws_response_json["VolumesModifications"][0]["StartTime"]
+                startTime = arrow.get(volume_status_timestamp)
+                now = arrow.utcnow()
+                diff = now - startTime
+                diff_in_hours = diff.total_seconds() / 3600
+                if diff_in_hours > 6:
+                    logging.info(f"Last resizing time is more than 6 hours, proceed to resize again")
+                    pass
+                else:
+                    raise Exception(f"We must wait for {6-diff_in_hours} hours to resize {pvc[0]}-{volume_id} again.")
        
             elif volume_status == "optimizing":
                 optimizing_progress = aws_response_json["VolumesModifications"][0]["Progress"]
@@ -268,6 +268,8 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
             logging.info(e)
             pass #Continue executing resizing
         
+        
+
         logging.info(f"RESIZING PVC {pvc[0]} FROM POD {pod}")
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         pvc_resize_number = int(
