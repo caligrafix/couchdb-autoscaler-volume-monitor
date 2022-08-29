@@ -26,7 +26,7 @@ def monitor_and_scale_pvc(namespace: str, VOLUME_THRESHOLD: float, \
         namespace, pods, MOUNT_VOLUME_PATH
     )
 
-    # Add pods to pods_over_threshold if % usage is over (or equal) threshold
+    # Add pods to pods_over_threshold if % usage is over (or equal) to threshold
     for pod, size in pods_volumes_info.items():
         if size >= VOLUME_THRESHOLD:
             pods_over_threshold.append(pod)

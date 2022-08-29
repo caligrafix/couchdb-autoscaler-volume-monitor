@@ -193,11 +193,12 @@ def get_related_pod_pvc(pods: list, namespace: str):
         pvc_name = api_response.spec.volumes[0].persistent_volume_claim.claim_name
         pvc_info.append(pvc_name)
 
-        # Get value of size PVC
+        # Get size of PVC
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
 
-        # logging.info(f'pvc_info: {pvc_metadata}')
+
+        logging.info(f'pvc_info: {pvc_metadata}')
 
         pvc_size = pvc_metadata.status.capacity['storage']
 
@@ -221,26 +222,30 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
     '''
     
     for pod, pvc in pod_pvc_info.items():
-        
-        pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
-        pvc_resize_number = int(
-            math.ceil(pvc_size*(resize_percentage)))  # Upper function
-        pvc_resize_value = str(pvc_resize_number)+'Gi'
 
-        spec_body = {'spec': {'resources': {
-            'requests': {'storage': pvc_resize_value}}}}
+        #Previous step: Get volume name and check status from aws
+        logging.info(f"pvc info from pod {pod}: {pvc}")
+        logging.info(f"{pod}-{pvc} inf")
 
-        logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
+        # pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
+        # pvc_resize_number = int(
+        #     math.ceil(pvc_size*(resize_percentage)))  # Upper function
+        # pvc_resize_value = str(pvc_resize_number)+'Gi'
 
-        # # Watch and wait until pvc is resize
-        resize_response = v1.patch_namespaced_persistent_volume_claim(
-            pvc[0], namespace, spec_body)
+        # spec_body = {'spec': {'resources': {
+        #     'requests': {'storage': pvc_resize_value}}}}
+
+        # logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
+
+        # # # Watch and wait until pvc is resize
+        # v1.patch_namespaced_persistent_volume_claim(
+        #     pvc[0], namespace, spec_body)
        
-        # Delete POD associated to PVC
-        delete_pods([pod], namespace)
+        # # Delete POD associated to PVC
+        # delete_pods([pod], namespace)
 
-        # Wait until pod to Running State
-        watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
+        # # Wait until pod to Running State
+        # watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
 
 
 # def watch_pvc_resize(namespace, pvc, spec_body):
@@ -323,10 +328,10 @@ def resize_pods_pvc(namespace, pods, VOLUME_RESIZE_PERCENTAGE):
         VOLUME_RESIZE_PERCENTAGE (float): % of volume to increase capacity
 
     Steps:
-        - Edit associate PVC to a pods:
+        - GET PODS with related PVC
         - Edit spec.resources.requests.storage attribute
-        - Terminate Pod
-        - Watch status of pod and get new values to storage capacity
+        - Terminate Pod -> UPDATE: Not necessary since kubernetes 1.17+
+        - Watch status of pod and get new values to storage capacity -> UPDATE: Not necessary
 
     '''
 
@@ -336,5 +341,5 @@ def resize_pods_pvc(namespace, pods, VOLUME_RESIZE_PERCENTAGE):
     pods_pvc_info = get_related_pod_pvc(pods, namespace)
 
     # Patch PVC
-    logging.info(f"Patching PVC...")
-    patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
+    # logging.info(f"Patching PVC...")
+    # patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
