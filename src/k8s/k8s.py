@@ -241,7 +241,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
             logging.info(f"aws response: {aws_response}")
             aws_response_json = json.loads(aws_response.stdout)
             logging.info(f"aws response json: {aws_response_json}")
-            volume_status = aws_response_json.VolumesModifications[0].ModificationState # TODO: With multiple modifications
+            volume_status = aws_response_json["VolumesModifications"][0]["ModificationState"] # TODO: With multiple modifications
             
             if volume_status == "completed":
                 logging.info(f"volume {volume_id} is completed: proceed to resize")
