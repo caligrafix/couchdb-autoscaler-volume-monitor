@@ -239,7 +239,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         try:
             aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True)
             logging.info(f"aws response: {aws_response}")
-            aws_response_json = json.loads(aws_response)
+            aws_response_json = json.loads(aws_response.stdout)
             logging.info(f"aws response json: {aws_response_json}")
             volume_status = aws_response_json.VolumesModifications[0].ModificationState # TODO: With multiple modifications
             
