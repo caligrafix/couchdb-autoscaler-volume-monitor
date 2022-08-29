@@ -238,14 +238,14 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         try:
             aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True)
             logging.info(f"aws response: {aws_response}")
-            volume_status = aws_response.VolumesModifications[0].ModificationState # TODO: With multiple modifications
+            volume_status = aws_response["VolumesModifications"][0]["ModificationState"] # TODO: With multiple modifications
             
             if volume_status == "completed":
                 logging.info(f"volume {volume_id} is completed: proceed to resize")
                 pass
        
             elif volume_status == "optimizing":
-                optimizing_progress = aws_response.VolumesModifications[0].Progress
+                optimizing_progress = aws_response["VolumesModifications"][0]["Progress"]
                 logging.info(f"volume {volume_id} is in optimizing state with progress: {optimizing_progress}")
                 continue # Go to the next item in for loop, don't resize
 
