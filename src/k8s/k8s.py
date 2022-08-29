@@ -197,13 +197,9 @@ def get_related_pod_pvc(pods: list, namespace: str):
         # Get PVC Size
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
+
         logging.info(f'pvc_info: {pvc_metadata}')
         
-
-        pvc_metadata_status = v1.read_namespaced_persistent_volume_claim_status(
-            namespace=namespace, name=pvc_name)
-
-        logging.info(f'pvc_info STATUS: {pvc_metadata_status}')
         # Add PVC Size
         pvc_size = pvc_metadata.status.capacity['storage']
         pvc_info.append(pvc_size)
@@ -238,7 +234,10 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         logging.info(f"pvc_volume_name-{pvc[2]} info:")
 
         # Get volume id
+        volume_metadata = v1.read_persistent_volume(pvc[2])
 
+        logging.info(f"Persistent volume metadata: {volume_metadata}")
+        
         vol_mods_cmd='aws ec2 describe-volumes-modifications --volume-ids {volume_id}' 
 
 
