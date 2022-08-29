@@ -256,7 +256,8 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
                     logging.info(f"Last resizing time is more than 6 hours, proceed to resize again")
                     pass
                 else:
-                    raise Exception(f"We must wait for {6-diff_in_hours} hours to resize {pvc[0]}-{volume_id} again.")
+                    logging.info(f"We must wait for {6-diff_in_hours} hours to resize {pvc[0]}-{volume_id} again.")
+                    continue
        
             elif volume_status == "optimizing":
                 optimizing_progress = aws_response_json["VolumesModifications"][0]["Progress"]
