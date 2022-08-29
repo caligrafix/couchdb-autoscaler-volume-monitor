@@ -4,6 +4,7 @@ from kubernetes.stream import stream
 
 import logging
 import math
+import subprocess
 
 try:
     config.load_incluster_config()
@@ -182,7 +183,7 @@ def get_related_pod_pvc(pods: list, namespace: str):
     Returns:
         pod_pvc_info (dict): Dictionary with pod name as key, and value a list 
                             with pvc name and % of usage of his associated pv. 
-                            {'pod1': ['pvc1', 0.3], 'pod2': ['pvc2', 0.5],...}
+                            {'pod1': ['pvc1', 0.3, 'volume_name'], 'pod2': ['pvc2', 0.5, 'volume_name'],...}
     '''
     pod_pvc_info = {}
     for pod in pods:
@@ -193,16 +194,23 @@ def get_related_pod_pvc(pods: list, namespace: str):
         pvc_name = api_response.spec.volumes[0].persistent_volume_claim.claim_name
         pvc_info.append(pvc_name)
 
-        # Get size of PVC
+        # Get PVC Size
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
-
-
         logging.info(f'pvc_info: {pvc_metadata}')
+        
 
+        pvc_metadata_status = v1.read_namespaced_persistent_volume_claim_status(
+            namespace=namespace, name=pvc_name)
+
+        logging.info(f'pvc_info STATUS: {pvc_metadata_status}')
+        # Add PVC Size
         pvc_size = pvc_metadata.status.capacity['storage']
-
         pvc_info.append(pvc_size)
+
+        # Add volume name to pvc info
+        volume_name = pvc_metadata.spec.volume_name
+        pvc_info.append(volume_name)
 
         pod_pvc_info[pod] = pvc_info
     return pod_pvc_info
@@ -225,8 +233,16 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
 
         #Previous step: Get volume name and check status from aws
         logging.info(f"pvc info from pod {pod}: {pvc}")
-        logging.info(f"{pod}-{pvc} inf")
+        logging.info(f"{pod}-{pvc} info:")
+        logging.info(f"pvc size:-{pvc[1]} info:")
+        logging.info(f"pvc_volume_name-{pvc[2]} info:")
 
+        # Get volume id
+
+        vol_mods_cmd='aws ec2 describe-volumes-modifications --volume-ids {volume_id}' 
+
+
+        # Check status of PVC 
         # pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         # pvc_resize_number = int(
         #     math.ceil(pvc_size*(resize_percentage)))  # Upper function
@@ -341,5 +357,5 @@ def resize_pods_pvc(namespace, pods, VOLUME_RESIZE_PERCENTAGE):
     pods_pvc_info = get_related_pod_pvc(pods, namespace)
 
     # Patch PVC
-    # logging.info(f"Patching PVC...")
-    # patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
+    logging.info(f"Patching PVC...")
+    patch_namespaced_pvc(namespace, pods_pvc_info, VOLUME_RESIZE_PERCENTAGE)
