@@ -238,27 +238,36 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         try:
             aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True)
             logging.info(f"aws response: {aws_response}")
+            volume_status = aws_response.VolumesModifications[0].ModificationState # TODO: With multiple modifications
+            
+            if volume_status == "completed":
+                logging.info(f"volume {volume_id} is completed: proceed to resize")
+                pass
+       
+            elif volume_status == "optimizing":
+                optimizing_progress = aws_response.VolumesModifications[0].Progress
+                logging.info(f"volume {volume_id} is in optimizing state with progress: {optimizing_progress}")
+                continue # Go to the next item in for loop, don't resize
 
         except subprocess.CalledProcessError as e:
+            # In case of non modified volume, continue
             logging.info(e)
+            pass #Continue executing resizing
+        
+        pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
+        pvc_resize_number = int(
+            math.ceil(pvc_size*(resize_percentage)))  # Upper function
+        pvc_resize_value = str(pvc_resize_number)+'Gi'
 
+        spec_body = {'spec': {'resources': {
+            'requests': {'storage': pvc_resize_value}}}}
 
+        logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
 
-        # Check status of PVC 
-        # pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
-        # pvc_resize_number = int(
-        #     math.ceil(pvc_size*(resize_percentage)))  # Upper function
-        # pvc_resize_value = str(pvc_resize_number)+'Gi'
+        # Watch and wait until pvc is resize
+        v1.patch_namespaced_persistent_volume_claim(
+            pvc[0], namespace, spec_body)
 
-        # spec_body = {'spec': {'resources': {
-        #     'requests': {'storage': pvc_resize_value}}}}
-
-        # logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
-
-        # # # Watch and wait until pvc is resize
-        # v1.patch_namespaced_persistent_volume_claim(
-        #     pvc[0], namespace, spec_body)
-       
         # # Delete POD associated to PVC
         # delete_pods([pod], namespace)
 
