@@ -237,7 +237,7 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         logging.info(f"vol_mods_cmd: {vol_mods_cmd}")
 
         try:
-            aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True)
+            aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True, stdout=subprocess.PIPE)
             logging.info(f"aws response: {aws_response}")
             aws_response_json = json.loads(aws_response.stdout)
             logging.info(f"aws response json: {aws_response_json}")
