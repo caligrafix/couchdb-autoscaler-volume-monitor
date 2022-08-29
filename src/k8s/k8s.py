@@ -227,20 +227,14 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
     
     for pod, pvc in pod_pvc_info.items():
 
-        #Previous step: Get volume name and check status from aws
-        logging.info(f"pvc info from pod {pod}: {pvc}")
-        logging.info(f"{pod}-{pvc} info:")
-        logging.info(f"pvc size:-{pvc[1]} info:")
-        logging.info(f"pvc_volume_name-{pvc[2]} info:")
-
         # Get volume id
         volume_metadata = v1.read_persistent_volume(pvc[2])
 
         volume_id = volume_metadata.spec.csi.volume_handle
 
         vol_mods_cmd=f"aws ec2 describe-volumes-modifications --volume-ids {volume_id}"
-
-        aws_response = subprocess.Popen(vol_mods_cmd, shell=True, stdout = subprocess.PIPE)
+        logging.info(f"vol_mods_cmd: {vol_mods_cmd}")
+        aws_response = subprocess.check_output(vol_mods_cmd.split(" "))
 
         logging.info(f"aws response: {aws_response}")
 
