@@ -1,3 +1,4 @@
+import json
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
@@ -238,7 +239,9 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
         try:
             aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True)
             logging.info(f"aws response: {aws_response}")
-            volume_status = aws_response["VolumesModifications"][0]["ModificationState"] # TODO: With multiple modifications
+            aws_response_json = json.loads(aws_response)
+            logging.info(f"aws response json: {aws_response_json}")
+            volume_status = aws_response_json.VolumesModifications[0].ModificationState # TODO: With multiple modifications
             
             if volume_status == "completed":
                 logging.info(f"volume {volume_id} is completed: proceed to resize")
