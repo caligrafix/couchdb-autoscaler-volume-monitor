@@ -198,7 +198,7 @@ def get_related_pod_pvc(pods: list, namespace: str):
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
 
-        logging.info(f'pvc_info: {pvc_metadata}')
+        # logging.info(f'pvc_info: {pvc_metadata}')
         
         # Add PVC Size
         pvc_size = pvc_metadata.status.capacity['storage']
