@@ -234,9 +234,14 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
 
         vol_mods_cmd=f"aws ec2 describe-volumes-modifications --volume-ids {volume_id}"
         logging.info(f"vol_mods_cmd: {vol_mods_cmd}")
-        aws_response = subprocess.run(vol_mods_cmd.split(" "))
 
-        logging.info(f"aws response: {aws_response}")
+        try:
+            aws_response = subprocess.run(vol_mods_cmd.split(" "))
+            logging.info(f"aws response: {aws_response}")
+
+        except Exception as e:
+            logging.info(e)
+
 
 
         # Check status of PVC 
