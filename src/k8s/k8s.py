@@ -2,8 +2,11 @@ from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 
+import arrow
+import json
 import logging
 import math
+import subprocess
 
 try:
     config.load_incluster_config()
@@ -182,7 +185,7 @@ def get_related_pod_pvc(pods: list, namespace: str):
     Returns:
         pod_pvc_info (dict): Dictionary with pod name as key, and value a list 
                             with pvc name and % of usage of his associated pv. 
-                            {'pod1': ['pvc1', 0.3], 'pod2': ['pvc2', 0.5],...}
+                            {'pod1': ['pvc1', 0.3, 'volume_name'], 'pod2': ['pvc2', 0.5, 'volume_name'],...}
     '''
     pod_pvc_info = {}
     for pod in pods:
@@ -193,15 +196,19 @@ def get_related_pod_pvc(pods: list, namespace: str):
         pvc_name = api_response.spec.volumes[0].persistent_volume_claim.claim_name
         pvc_info.append(pvc_name)
 
-        # Get value of size PVC
+        # Get PVC Size
         pvc_metadata = v1.read_namespaced_persistent_volume_claim(
             namespace=namespace, name=pvc_name)
 
         # logging.info(f'pvc_info: {pvc_metadata}')
-
+        
+        # Add PVC Size
         pvc_size = pvc_metadata.status.capacity['storage']
-
         pvc_info.append(pvc_size)
+
+        # Add volume name to pvc info
+        volume_name = pvc_metadata.spec.volume_name
+        pvc_info.append(volume_name)
 
         pod_pvc_info[pod] = pvc_info
     return pod_pvc_info
@@ -221,7 +228,50 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
     '''
     
     for pod, pvc in pod_pvc_info.items():
+
+        # Get volume id
+        volume_metadata = v1.read_persistent_volume(pvc[2])
+
+        volume_id = volume_metadata.spec.csi.volume_handle
+
+        vol_mods_cmd=f"aws ec2 describe-volumes-modifications --volume-ids {volume_id}"
+        logging.info(f"vol_mods_cmd: {vol_mods_cmd}")
+
+        try:
+            aws_response = subprocess.run(vol_mods_cmd.split(" "), check=True, stdout=subprocess.PIPE)
+            # logging.info(f"aws response: {aws_response}")
+            aws_response_json = json.loads(aws_response.stdout)
+            logging.info(f"aws response json: {aws_response_json}")
+            volume_status = aws_response_json["VolumesModifications"][0]["ModificationState"] # TODO: With multiple modifications
+            
+            if volume_status == "completed":
+                logging.info(f"volume {volume_id} is completed: proceed to resize")
+                # Check that pass at least six hours to last resizing event
+                volume_status_timestamp = aws_response_json["VolumesModifications"][0]["StartTime"]
+                startTime = arrow.get(volume_status_timestamp)
+                now = arrow.utcnow()
+                diff = now - startTime
+                diff_in_hours = diff.total_seconds() / 3600
+                if diff_in_hours > 6:
+                    logging.info(f"Last resizing time is more than 6 hours, proceed to resize again")
+                    pass
+                else:
+                    logging.info(f"We must wait for {6-diff_in_hours} hours to resize {pvc[0]}-{volume_id} again.")
+                    continue
+       
+            elif volume_status == "optimizing":
+                optimizing_progress = aws_response_json["VolumesModifications"][0]["Progress"]
+                logging.info(f"volume {volume_id} is in optimizing state with progress: {optimizing_progress}")
+                continue # Go to the next item in for loop, don't resize
+
+        except subprocess.CalledProcessError as e:
+            # In case of non modified volume, pass
+            logging.info(e)
+            pass #Continue executing resizing
         
+        
+
+        logging.info(f"RESIZING PVC {pvc[0]} FROM POD {pod}")
         pvc_size = int(pvc[1].strip('Gi'))  # Must be in Gi unit
         pvc_resize_number = int(
             math.ceil(pvc_size*(resize_percentage)))  # Upper function
@@ -232,15 +282,15 @@ def patch_namespaced_pvc(namespace: str, pod_pvc_info: dict, resize_percentage: 
 
         logging.info(f"resizing {pvc[0]}-{pvc[1]} to {pvc_resize_value}")
 
-        # # Watch and wait until pvc is resize
-        resize_response = v1.patch_namespaced_persistent_volume_claim(
+        # Watch and wait until pvc is resize
+        v1.patch_namespaced_persistent_volume_claim(
             pvc[0], namespace, spec_body)
-       
-        # Delete POD associated to PVC
-        delete_pods([pod], namespace)
 
-        # Wait until pod to Running State
-        watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
+        # # Delete POD associated to PVC
+        # delete_pods([pod], namespace)
+
+        # # Wait until pod to Running State
+        # watch_pod_resurrect(pod, namespace, labels=f'app=couchdb, statefulset.kubernetes.io/pod-name={pod}')
 
 
 # def watch_pvc_resize(namespace, pvc, spec_body):
@@ -323,10 +373,10 @@ def resize_pods_pvc(namespace, pods, VOLUME_RESIZE_PERCENTAGE):
         VOLUME_RESIZE_PERCENTAGE (float): % of volume to increase capacity
 
     Steps:
-        - Edit associate PVC to a pods:
+        - GET PODS with related PVC
         - Edit spec.resources.requests.storage attribute
-        - Terminate Pod
-        - Watch status of pod and get new values to storage capacity
+        - Terminate Pod -> UPDATE: Not necessary since kubernetes 1.17+
+        - Watch status of pod and get new values to storage capacity -> UPDATE: Not necessary
 
     '''
 
